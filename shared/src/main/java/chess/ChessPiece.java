@@ -1,7 +1,8 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 
 /**
  * Represents a single chess piece
@@ -53,6 +54,30 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return new HashSet<ChessMove>();
+        ChessPiece piece = board.getPiece(myPosition);
+        if (piece.getPieceType() == PieceType.KING) {}
+        else if (piece.getPieceType() == PieceType.QUEEN) {}
+        else if (piece.getPieceType() == PieceType.BISHOP) {
+            int currRow = myPosition.getRow();
+            int currCol = myPosition.getColumn();
+            List<ChessMove> valid = new ArrayList<>();
+            for (int i = 1; i <= 8; i++) {
+                for (int j = 1; j <= 8; j++) {
+                    if (i == currRow && j == currCol) {
+                        continue;
+                    }
+                    else if (Math.abs(i - currRow) == Math.abs(j - currCol)) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(i, j), null));
+                    }
+                }
+            }
+            return valid;
+//            return List.of(new ChessMove(new ChessPosition(5,4), new ChessPosition(1, 8), null));
+        }
+        else if (piece.getPieceType() == PieceType.KNIGHT) {}
+        else if (piece.getPieceType() == PieceType.ROOK) {}
+        else if (piece.getPieceType() == PieceType.PAWN) {}
+
+        return List.of();
     }
 }

@@ -36,7 +36,7 @@ public class ChessPiece {
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-        throw new RuntimeException("Not implemented");
+        return pieceColor;
     }
 
     /**
@@ -55,29 +55,229 @@ public class ChessPiece {
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         ChessPiece piece = board.getPiece(myPosition);
-        if (piece.getPieceType() == PieceType.KING) {}
-        else if (piece.getPieceType() == PieceType.QUEEN) {}
-        else if (piece.getPieceType() == PieceType.BISHOP) {
-            int currRow = myPosition.getRow();
-            int currCol = myPosition.getColumn();
-            List<ChessMove> valid = new ArrayList<>();
-            for (int i = 1; i <= 8; i++) {
-                for (int j = 1; j <= 8; j++) {
-                    if (i == currRow && j == currCol) {
-                        continue;
-                    }
-                    else if (Math.abs(i - currRow) == Math.abs(j - currCol)) {
-                        valid.add(new ChessMove(myPosition, new ChessPosition(i, j), null));
+        List<ChessMove> valid = new ArrayList<>();
+        int currRow = myPosition.getRow();
+        int currCol = myPosition.getColumn();
+
+        if (piece.getPieceType() == PieceType.KING) {
+            // set up available directions
+            int[][] moves = {{0,-1}, {1,-1}, {1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}};
+
+            // go through each possible direction
+            for (int[] move : moves) {
+                int rowMove = move[0];
+                int colMove = move[1];
+
+                int checkRow = currRow + rowMove;
+                int checkCol = currCol + colMove;
+
+                //if out of bounds, move on to next iteration
+                if (!(checkRow > 0 && checkRow <= 8 && checkCol > 0 && checkCol <= 8)) {
+                    continue;
+                }
+
+                // Get piece in desired move spot
+                ChessPiece placePiece = board.getPiece(new ChessPosition(checkRow, checkCol));
+                // if there is no piece in that spot, add it as a valid move
+                if (placePiece == null) {
+                    valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                }
+                // if there is a piece of the opposite team there, check if it is the King. If not, add as valid move
+                else if (pieceColor != placePiece.getTeamColor()) {
+                    if (placePiece.getPieceType() != type) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
                     }
                 }
             }
-            return valid;
-//            return List.of(new ChessMove(new ChessPosition(5,4), new ChessPosition(1, 8), null));
         }
-        else if (piece.getPieceType() == PieceType.KNIGHT) {}
-        else if (piece.getPieceType() == PieceType.ROOK) {}
-        else if (piece.getPieceType() == PieceType.PAWN) {}
+        else if (piece.getPieceType() == PieceType.QUEEN) {
+            // set up available directions
+            int[][] moves = {{0,-1}, {1,-1}, {1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}};
 
-        return List.of();
+            // go through each possible direction
+            for (int[] move : moves) {
+                int rowMove = move[0];
+                int colMove = move[1];
+
+                int checkRow = currRow + rowMove;
+                int checkCol = currCol + colMove;
+
+                // if out of bounds, move on to next direction check
+                while (checkRow > 0 && checkRow <= 8 && checkCol > 0 && checkCol <= 8) {
+
+                    // Get piece in desired move spot
+                    ChessPiece placePiece = board.getPiece(new ChessPosition(checkRow, checkCol));
+                    // if there is no piece in that spot, add it as a valid move
+                    if (placePiece == null) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                    }
+                    // if there is a piece of the opposite team there, check if it is the King. If not, add as valid move
+                    else if (pieceColor != placePiece.getTeamColor()) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                        break;
+                    }
+                    else {
+                        break;
+                    }
+                    checkRow += rowMove;
+                    checkCol += colMove;
+                }
+            }
+        }
+        else if (piece.getPieceType() == PieceType.BISHOP) {
+            // set up available directions
+            int[][] moves = {{1,1}, {-1,1}, {1,-1}, {-1,-1}};
+
+            for (int[] move : moves) {
+                int rowMove = move[0];
+                int colMove = move[1];
+
+                int checkRow = currRow + rowMove;
+                int checkCol = currCol + colMove;
+
+                while (checkRow > 0 && checkRow <= 8 && checkCol > 0 && checkCol <= 8) {
+                    if (board.getPiece(new ChessPosition(checkRow, checkCol)) == null) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                    }
+                    else if (pieceColor != board.getPiece(new ChessPosition(checkRow, checkCol)).getTeamColor()) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                        break;
+                    }
+                    else {
+                        break;
+                    }
+                    checkRow += rowMove;
+                    checkCol += colMove;
+                }
+            }
+        }
+        else if (piece.getPieceType() == PieceType.KNIGHT) {
+            // set up available directions
+            int[][] moves = {{1,-2}, {2,-1}, {2,1}, {1,2}, {-1,2}, {-2,1}, {-2,-1}, {-1,-2}};
+
+            // go through each possible direction
+            for (int[] move : moves) {
+                int rowMove = move[0];
+                int colMove = move[1];
+
+                int checkRow = currRow + rowMove;
+                int checkCol = currCol + colMove;
+
+                //if out of bounds, move on to next iteration
+                if (!(checkRow > 0 && checkRow <= 8 && checkCol > 0 && checkCol <= 8)) {
+                    continue;
+                }
+
+                // Get piece in desired move spot
+                ChessPiece placePiece = board.getPiece(new ChessPosition(checkRow, checkCol));
+                // if there is no piece in that spot, add it as a valid move
+                if (placePiece == null) {
+                    valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                }
+                // if there is a piece of the opposite team there, check if it is the King. If not, add as valid move
+                else if (pieceColor != placePiece.getTeamColor()) {
+                    valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                }
+            }
+        }
+        else if (piece.getPieceType() == PieceType.ROOK) {
+            // set up available directions
+            int[][] moves = {{0,-1}, {1,0}, {0,1}, {-1,0}};
+
+            for (int[] move : moves) {
+                int rowMove = move[0];
+                int colMove = move[1];
+
+                int checkRow = currRow + rowMove;
+                int checkCol = currCol + colMove;
+
+                while (checkRow > 0 && checkRow <= 8 && checkCol > 0 && checkCol <= 8) {
+                    if (board.getPiece(new ChessPosition(checkRow, checkCol)) == null) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                    }
+                    else if (pieceColor != board.getPiece(new ChessPosition(checkRow, checkCol)).getTeamColor()) {
+                        valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                        break;
+                    }
+                    else {
+                        break;
+                    }
+                    checkRow += rowMove;
+                    checkCol += colMove;
+                }
+            }
+        }
+        else if (piece.getPieceType() == PieceType.PAWN) {
+            // set up available directions
+            int[][] moves = {{1,0}, {1,-1}, {1,1}};
+            int promotionRow = 7;
+            if (piece.pieceColor == ChessGame.TeamColor.BLACK) {
+                moves[0][0] = -1;
+                moves[1][0] = -1;
+                moves[2][0] = -1;
+                promotionRow = 2;
+            }
+            int iter = 0;           // keep track of which iteration to deal with capturing.
+
+            // go through each possible direction
+            for (int[] move : moves) {
+                int rowMove = move[0];
+                int colMove = move[1];
+
+                int checkRow = currRow + rowMove;
+                int checkCol = currCol + colMove;
+
+                //if out of bounds, move on to next iteration
+                if (!(checkRow > 0 && checkRow <= 8 && checkCol > 0 && checkCol <= 8)) {
+                    continue;
+                }
+
+                // Get piece in desired move spot
+                ChessPiece placePiece = board.getPiece(new ChessPosition(checkRow, checkCol));
+                // if we are on the first iteration, pawn is moving forward and cannot capture
+                if (iter == 0) {
+                    // if there is no piece in that spot, add it as a valid move
+                    if (placePiece == null) {
+                        if (currRow == promotionRow) {
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.QUEEN));
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.ROOK));
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.BISHOP));
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.KNIGHT));
+                        }
+                        else {
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                        }
+                        iter++;
+                    }
+                    // check if it is the pawns first move. if it is, it can move 1 or 2 forward
+                    if ((pieceColor == ChessGame.TeamColor.WHITE && currRow == 2)|| (pieceColor == ChessGame.TeamColor.BLACK && currRow == 7) && (iter == 1)) {
+                        ChessPosition checkPosition = new ChessPosition(checkRow + rowMove, checkCol);
+                        if (board.getPiece(checkPosition) == null) {
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow + rowMove, checkCol), null));
+                        }
+                    }
+
+
+                }
+                else {
+                    // if there is a piece of the opposite team there, add as valid move
+
+                    if (placePiece != null && pieceColor != placePiece.getTeamColor()) {
+                        if (currRow == promotionRow) {
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.QUEEN));
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.ROOK));
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.BISHOP));
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), PieceType.KNIGHT));
+                        }
+                        else {
+                            valid.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                        }
+                    }
+                }
+                iter++;
+            }
+        }
+
+        return valid;
     }
 }

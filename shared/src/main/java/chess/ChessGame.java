@@ -60,7 +60,13 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> currMoves = validMoves(move.getStartPosition());
+        for (ChessMove currMove : currMoves) {
+            if (move == currMove) {
+                // TODO: finish this
+            }
+        }
+        throw new InvalidMoveException("Invalid move: " + move);
     }
 
     /**
@@ -91,7 +97,11 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (!isInCheck(teamColor)) {
+            return false;
+        }
+        // TODO: go through all pieces to see if there are no possible movese
+        return true;
     }
 
     /**

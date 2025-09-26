@@ -60,10 +60,29 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        TeamColor opposingTeam;
+        if (turn == TeamColor.BLACK) {
+            opposingTeam = TeamColor.WHITE;
+        }
+        else { opposingTeam = TeamColor.BLACK; }
+
+        ChessPiece currPiece = board.getPiece(move.getStartPosition());
+        // if the starting position of the move does not have a piece there, throw error
+        if (currPiece == null) {
+            throw new InvalidMoveException("Invalid move: No piece found");
+        }
+        if (currPiece.getTeamColor() == opposingTeam) {
+            throw new InvalidMoveException("Invalid move: That piece is not on your team");
+        }
+        // get valid moves
         Collection<ChessMove> currMoves = validMoves(move.getStartPosition());
+        // check if the desired move is in the list of valid moves. if it is, make the move
         for (ChessMove currMove : currMoves) {
+            // move the piece to that place, capture a piece if there was one there, change the team turn
+            // check if pawn needs to be promoted
             if (move == currMove) {
                 // TODO: finish this
+                turn = opposingTeam;
             }
         }
         throw new InvalidMoveException("Invalid move: " + move);

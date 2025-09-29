@@ -218,8 +218,28 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        if (!isInCheck(teamColor)) {
+        if (isInCheck(teamColor)) {
+            if (teamColor == TeamColor.BLACK) {
+                turn = TeamColor.WHITE;
+            }
+            else { turn = TeamColor.BLACK; }
             return false;
+        }
+        for (int i = 1; i < 9; i++) {
+            for (int j = 1; j < 9; j++) {
+                ChessPiece currPiece = board.getPiece(new ChessPosition(i, j));
+                if (currPiece == null) { continue; }
+                if (currPiece.getTeamColor() == teamColor) {
+                    Collection<ChessMove> moves = validMoves(new ChessPosition(i, j));
+                    if (!moves.isEmpty()) {
+                        if (teamColor == TeamColor.BLACK) {
+                            turn = TeamColor.WHITE;
+                        }
+                        else { turn = TeamColor.BLACK; }
+                        return false;
+                    }
+                }
+            }
         }
         // TODO: go through all pieces to see if there are no possible movese
         return true;

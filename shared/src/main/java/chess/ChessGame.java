@@ -12,7 +12,7 @@ import java.util.Objects;
  * signature of the existing methods.
  */
 public class ChessGame {
-    TeamColor turn;
+    TeamColor turn = TeamColor.WHITE;
     ChessBoard board;
     List<ChessPiece> capturedPieces = new ArrayList<>();
 
@@ -91,6 +91,7 @@ public class ChessGame {
         }
         board.setPiece(move.getEndPosition(), currPiece);
         board.setPiece(move.getStartPosition(), null);
+//        turn = turn;
         return;
     }
 

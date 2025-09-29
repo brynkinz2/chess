@@ -1,6 +1,9 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -11,9 +14,16 @@ import java.util.Collection;
 public class ChessGame {
     TeamColor turn;
     ChessBoard board;
+    List<ChessPiece> capturedPieces;
 
     public ChessGame() {
 
+    }
+
+    public ChessGame(ChessBoard board, TeamColor turn) {
+        this.board = new ChessBoard(board.getBoard());
+        this.capturedPieces = new ArrayList<>();
+        this.turn = turn;
     }
 
     /**
@@ -49,9 +59,41 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece currPiece = board.getPiece(startPosition);
+        Collection<ChessMove> validMoves = currPiece.pieceMoves(board, startPosition);
+        // for each move that can be made, check if it will put the king under attack
+        for (ChessMove move : validMoves) {
+            ChessGame copyGame = new ChessGame(board, turn);
+            copyGame.checkMove(move);
+            if (copyGame.isInCheck(copyGame.turn)) {
+                validMoves.remove(move);
+                continue;
+            }
+
+        }
         // TODO: Take out moves that are invalid.
         return currPiece.pieceMoves(board, startPosition);
     }
+
+    public void checkMove(ChessMove move) {
+        TeamColor opposingTeam;
+        if (turn == TeamColor.BLACK) {
+            opposingTeam = TeamColor.WHITE;
+        } else {
+            opposingTeam = TeamColor.BLACK;
+        }
+
+        ChessPiece currPiece = board.getPiece(move.getStartPosition());
+        // get valid moves
+        ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
+        if (capturedPiece != null) {
+            capturedPieces.add(capturedPiece);
+        }
+        board.setPiece(move.getEndPosition(), currPiece);
+        board.setPiece(move.getStartPosition(), null);
+        turn = opposingTeam;
+        return;
+    }
+
 
     /**
      * Makes a move in a chess game
@@ -80,9 +122,15 @@ public class ChessGame {
         for (ChessMove currMove : currMoves) {
             // move the piece to that place, capture a piece if there was one there, change the team turn
             // check if pawn needs to be promoted
-            if (move == currMove) {
-                // TODO: finish this
+            if (currMove.equals(move)) {
+                ChessPiece capturedPiece = board.getPiece(currMove.getEndPosition());
+                if (capturedPiece != null) {
+                    capturedPieces.add(capturedPiece);
+                }
+                board.setPiece(currMove.getEndPosition(), currPiece);
+                board.setPiece(currMove.getStartPosition(), null);
                 turn = opposingTeam;
+                return;
             }
         }
         throw new InvalidMoveException("Invalid move: " + move);
@@ -95,7 +143,8 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        return false;
+//        throw new RuntimeException("Not implemented");
     }
 
     /**
@@ -139,5 +188,31 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessGame chessGame = (ChessGame) o;
+        return turn == chessGame.turn && Objects.equals(board, chessGame.board) && Objects.equals(capturedPieces, chessGame.capturedPieces);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(turn, board, capturedPieces);
+    }
+
+    @Override
+    public String toString() {
+        return "ChessGame{" +
+                "turn=" + turn +
+                ", board=" + board +
+                ", capturedPieces=" + capturedPieces +
+                '}';
     }
 }

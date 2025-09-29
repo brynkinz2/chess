@@ -12,12 +12,20 @@ import java.util.Objects;
 public class ChessBoard {
     private ChessPiece[][] board = new ChessPiece[8][8];
 
-    public ChessBoard() {
-//        for (int i = 0; i < 8; i++) {
-//            addPiece(new ChessPosition(2, i), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
-//            addPiece(new ChessPosition(7, i), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
-//
-//        }
+    public ChessBoard() {}
+
+    public ChessBoard(ChessPiece[][] copyBoard) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                ChessPiece copyPiece = copyBoard[i][j];
+                if (copyPiece != null) {
+                    ChessPiece piece = new ChessPiece(copyPiece.getTeamColor(), copyPiece.getPieceType());
+                    board[i][j] = piece;
+                } else {
+                    board[i][j] = null;
+                }
+            }
+        }
     }
 
     /**
@@ -39,6 +47,14 @@ public class ChessBoard {
      */
     public ChessPiece getPiece(ChessPosition position) {
         return board[position.getRow()-1][position.getColumn()-1];
+    }
+
+    public void setPiece(ChessPosition position, ChessPiece piece) {
+        board[position.getRow()-1][position.getColumn()-1] = piece;
+    }
+
+    public ChessPiece[][] getBoard() {
+        return board;
     }
 
     /**

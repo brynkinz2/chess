@@ -13,11 +13,11 @@ import java.util.Objects;
  */
 public class ChessGame {
     TeamColor turn = TeamColor.WHITE;
-    ChessBoard board;
+    ChessBoard board = new ChessBoard();
     List<ChessPiece> capturedPieces = new ArrayList<>();
 
     public ChessGame() {
-
+        board.resetBoard();
     }
 
     public ChessGame(ChessBoard board, TeamColor turn) {
@@ -103,6 +103,9 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+//        if (turn == null) {
+//            turn = board.getPiece(move.getStartPosition()).getTeamColor();
+//        }
         TeamColor opposingTeam;
         if (turn == TeamColor.BLACK) {
             opposingTeam = TeamColor.WHITE;

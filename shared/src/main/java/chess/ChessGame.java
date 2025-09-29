@@ -59,18 +59,16 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece currPiece = board.getPiece(startPosition);
-        Collection<ChessMove> validMoves = currPiece.pieceMoves(board, startPosition);
+        Collection<ChessMove> allMoves = currPiece.pieceMoves(board, startPosition);
+        Collection<ChessMove> validMoves = new ArrayList<>();
         // for each move that can be made, check if it will put the king under attack
-        for (ChessMove move : validMoves) {
+        for (ChessMove move : allMoves) {
             ChessGame copyGame = new ChessGame(board, turn);
             copyGame.checkMove(move);
-            if (copyGame.isInCheck(copyGame.turn)) {
-                validMoves.remove(move);
-                continue;
+            if (!copyGame.isInCheck(copyGame.turn)) {
+                validMoves.add(move);
             }
-
         }
-        // TODO: Take out moves that are invalid.
         return currPiece.pieceMoves(board, startPosition);
     }
 

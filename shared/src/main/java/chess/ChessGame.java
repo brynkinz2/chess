@@ -69,7 +69,7 @@ public class ChessGame {
                 validMoves.add(move);
             }
         }
-        return currPiece.pieceMoves(board, startPosition);
+        return validMoves;
     }
 
     public void checkMove(ChessMove move) {
@@ -91,7 +91,6 @@ public class ChessGame {
         }
         board.setPiece(move.getEndPosition(), currPiece);
         board.setPiece(move.getStartPosition(), null);
-        turn = opposingTeam;
         return;
     }
 

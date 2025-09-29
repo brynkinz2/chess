@@ -103,9 +103,6 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-//        if (turn == null) {
-//            turn = board.getPiece(move.getStartPosition()).getTeamColor();
-//        }
         TeamColor opposingTeam;
         if (turn == TeamColor.BLACK) {
             opposingTeam = TeamColor.WHITE;
@@ -195,11 +192,21 @@ public class ChessGame {
                 ChessPiece currPiece = board.getPiece(new ChessPosition(i, j));
                 if (currPiece == null) { continue; }
                 if (currPiece.getTeamColor() == teamColor) {
-                    Collection<ChessMove> moves = currPiece.pieceMoves(board, new ChessPosition(i, j));
-                    if (!moves.isEmpty()) { return false; }
+                    Collection<ChessMove> moves = validMoves(new ChessPosition(i, j));
+                    if (!moves.isEmpty()) {
+                        if (teamColor == TeamColor.BLACK) {
+                            turn = TeamColor.WHITE;
+                        }
+                        else { turn = TeamColor.BLACK; }
+                        return false;
+                    }
                 }
             }
         }
+        if (teamColor == TeamColor.BLACK) {
+            turn = TeamColor.WHITE;
+        }
+        else { turn = TeamColor.BLACK; }
         return true;
     }
 

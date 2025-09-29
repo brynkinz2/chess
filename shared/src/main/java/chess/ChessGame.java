@@ -14,7 +14,7 @@ import java.util.Objects;
 public class ChessGame {
     TeamColor turn;
     ChessBoard board;
-    List<ChessPiece> capturedPieces;
+    List<ChessPiece> capturedPieces = new ArrayList<>();
 
     public ChessGame() {
 
@@ -86,6 +86,9 @@ public class ChessGame {
         if (capturedPiece != null) {
             capturedPieces.add(capturedPiece);
         }
+        if (move.getPromotionPiece() != null) {
+            currPiece.promote(move.getPromotionPiece());
+        }
         board.setPiece(move.getEndPosition(), currPiece);
         board.setPiece(move.getStartPosition(), null);
         turn = opposingTeam;
@@ -125,8 +128,12 @@ public class ChessGame {
                 if (capturedPiece != null) {
                     capturedPieces.add(capturedPiece);
                 }
+                if (move.getPromotionPiece() != null) {
+                    currPiece.promote(move.getPromotionPiece());
+                }
                 board.setPiece(currMove.getEndPosition(), currPiece);
                 board.setPiece(currMove.getStartPosition(), null);
+
                 turn = opposingTeam;
                 return;
             }

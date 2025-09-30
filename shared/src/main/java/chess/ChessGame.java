@@ -61,11 +61,12 @@ public class ChessGame {
         ChessPiece currPiece = board.getPiece(startPosition);
         Collection<ChessMove> allMoves = currPiece.pieceMoves(board, startPosition);
         Collection<ChessMove> validMoves = new ArrayList<>();
+        TeamColor team = currPiece.getTeamColor();
         // for each move that can be made, check if it will put the king under attack
         for (ChessMove move : allMoves) {
-            ChessGame copyGame = new ChessGame(board, turn);
+            ChessGame copyGame = new ChessGame(board, team);
             copyGame.checkMove(move);
-            if (!copyGame.isInCheck(copyGame.turn)) {
+            if (!copyGame.isInCheck(team)) {
                 validMoves.add(move);
             }
         }

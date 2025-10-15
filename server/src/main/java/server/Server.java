@@ -26,6 +26,13 @@ public class Server {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
         String username = (String) req.get("username");
+        String password = (String) req.get("password");
+        if (password == null) {
+            ctx.status(400);
+            var errorRes = Map.of("message", "Error: Please include a password.");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
         if (userAlreadyExists(username)) {
             ctx.status(403);
             var errorRes = Map.of("message", "Error: Username already exists!");

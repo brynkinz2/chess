@@ -5,11 +5,14 @@ import io.javalin.*;
 import io.javalin.http.Context;
 import org.eclipse.jetty.server.Authentication;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class Server {
 
     private final Javalin server;
+    private List<String> usernames = new ArrayList<>();
 
     public Server() {
         server = Javalin.create(config -> config.staticFiles.add("web"));
@@ -22,10 +25,23 @@ public class Server {
     private void register(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
-        //
-        var res = Map.of("username", req.get("username"), "authToken", "xyz");
+        String username = (String) req.get("username");
+        if (userAlreadyExists(username)) {
+            ctx.status(403);
+            var errorRes = Map.of("message", "Error: Username already exists!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
+        usernames.add(username);
+        var res = Map.of("username", username, "authToken", "xyz");
         ctx.result(serializer.toJson(res));
+    }
 
+    private boolean userAlreadyExists(String username) {
+        if (usernames.contains(username)) {
+            return true;
+        }
+        return false;
     }
 
     public int run(int desiredPort) {

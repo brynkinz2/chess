@@ -110,7 +110,10 @@ public class Server {
             }
         }
         if (!found) {
+            ctx.status(401);
             var errorRes = Map.of("message", "Error: User not logged in!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
         }
 //        UserData currentUser = users.remove(username);
 //        users.put(username, new UserData(username, currentUser.password));

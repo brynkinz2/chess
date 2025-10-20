@@ -14,6 +14,7 @@ public class Server {
 
     private final Javalin server;
     private Map<String, UserData> users = new HashMap<>();
+    private Map<String, String> userAuth = new HashMap<>();
 
     public Server() {
         server = Javalin.create(config -> config.staticFiles.add("web"));
@@ -27,8 +28,7 @@ public class Server {
 
     record UserData(
             String username,
-            String password,
-            String authToken){
+            String password){
     }
 
     private void register(Context ctx) {
@@ -48,8 +48,9 @@ public class Server {
             ctx.result(serializer.toJson(errorRes));
             return;
         }
-        UserData newUser = new UserData(username, password, "xyz");
+        UserData newUser = new UserData(username, password);
         users.put(username, newUser);
+        userAuth.put(username, "xyz");
         var res = Map.of("username", username, "authToken", "xyz");
         ctx.result(serializer.toJson(res));
     }
@@ -74,6 +75,7 @@ public class Server {
         }
         if (userAlreadyExists(username)) {
             if (users.get(username).password.equals(password)) {
+                userAuth.put(username, "xyz");
                 var res = Map.of("username", username, "authToken", "xyz");
                 ctx.result(serializer.toJson(res));
                 return;
@@ -94,8 +96,26 @@ public class Server {
 
     private void logout(Context ctx) {
         var serializer = new Gson();
-        var req = serializer.fromJson(ctx.body(), Map.class);
-        String username = (String) req.get("username");
+//        var req = serializer.fromJson(ctx.body(), String.class);
+        String authToken = ctx.header("authorization");
+        boolean found = false;
+        String username = null;
+        for (Map.Entry<String, String> entry : userAuth.entrySet()) {
+            if (authToken.equals(entry.getValue())) {
+                username = entry.getKey();
+                userAuth.remove(entry.getKey());
+                found = true;
+                ctx.status(200);
+                break;
+            }
+        }
+        if (!found) {
+            var errorRes = Map.of("message", "Error: User not logged in!");
+        }
+//        UserData currentUser = users.remove(username);
+//        users.put(username, new UserData(username, currentUser.password));
+        var res = Map.of("username", username, "authToken", " ");
+        ctx.result(serializer.toJson(res));
         return;
     }
 

@@ -1,19 +1,19 @@
 package server;
 
 public class GameData {
-    private String gameID;
+    private int gameID;
     private String whiteUsername;
     private String blackUsername;
     private String gameName;
 
-    public GameData(String gameID, String whiteUsername, String blackUsername, String gameName) {
+    public GameData(int gameID, String whiteUsername, String blackUsername, String gameName) {
         this.gameID = gameID;
         this.whiteUsername = whiteUsername;
         this.blackUsername = blackUsername;
         this.gameName = gameName;
     }
 
-    public String getGameID() {
+    public int getGameID() {
         return gameID;
     }
 

@@ -15,7 +15,7 @@ public class Server {
     private final Javalin server;
     private Map<String, UserData> users = new HashMap<>();
     private Map<String, String> userAuth = new HashMap<>();
-    private List<GameData> games;
+    private List<GameData> games = new ArrayList<>();
 
     public Server() {
         server = Javalin.create(config -> config.staticFiles.add("web"));
@@ -24,6 +24,7 @@ public class Server {
         server.post("user", ctx -> register(ctx));
         server.post("/session", ctx -> login(ctx));
         server.delete("/session", ctx -> logout(ctx));
+        server.post("/game", ctx -> createGame(ctx));
 
     }
 
@@ -134,7 +135,22 @@ public class Server {
     private void createGame(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
-
+        String authToken = ctx.header("authorization");
+        String username = userLoggedIn(authToken);
+        if (username == null) {
+            ctx.status(401);
+            var errorRes = Map.of("message", "Error: User not logged in!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
+        String gameName = (String) req.get("gameName");
+        int gameID = 123;
+        GameData newGame = new GameData(gameID, null, null, gameName);
+        games.add(newGame);
+        ctx.status(200);
+        var res = Map.of("gameID", gameID);
+        ctx.result(serializer.toJson(res));
+        return;
     }
 
     private void clear() {

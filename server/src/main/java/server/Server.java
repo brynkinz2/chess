@@ -15,6 +15,7 @@ public class Server {
     private final Javalin server;
     private Map<String, UserData> users = new HashMap<>();
     private Map<String, String> userAuth = new HashMap<>();
+    private List<GameData> games;
 
     public Server() {
         server = Javalin.create(config -> config.staticFiles.add("web"));
@@ -38,13 +39,13 @@ public class Server {
         String password = (String) req.get("password");
         if (password == null) {
             ctx.status(400);
-            var errorRes = Map.of("message", "Error: Please include a password.");
+            var errorRes = Map.of("message", "Error: bad request");
             ctx.result(serializer.toJson(errorRes));
             return;
         }
         if (userAlreadyExists(username)) {
             ctx.status(403);
-            var errorRes = Map.of("message", "Error: Username already exists!");
+            var errorRes = Map.of("message", "Error: user already taken");
             ctx.result(serializer.toJson(errorRes));
             return;
         }
@@ -94,22 +95,25 @@ public class Server {
         }
     }
 
-    private void logout(Context ctx) {
-        var serializer = new Gson();
-//        var req = serializer.fromJson(ctx.body(), String.class);
-        String authToken = ctx.header("authorization");
-        boolean found = false;
+    private String userLoggedIn(String authToken) {
         String username = null;
         for (Map.Entry<String, String> entry : userAuth.entrySet()) {
             if (authToken.equals(entry.getValue())) {
                 username = entry.getKey();
                 userAuth.remove(entry.getKey());
-                found = true;
-                ctx.status(200);
                 break;
             }
         }
-        if (!found) {
+        return username;
+    }
+
+    private void logout(Context ctx) {
+        var serializer = new Gson();
+//        var req = serializer.fromJson(ctx.body(), String.class);
+        String authToken = ctx.header("authorization");
+        boolean found = false;
+        String username = userLoggedIn(authToken);
+        if (username == null) {
             ctx.status(401);
             var errorRes = Map.of("message", "Error: User not logged in!");
             ctx.result(serializer.toJson(errorRes));
@@ -120,6 +124,17 @@ public class Server {
         var res = Map.of("username", username, "authToken", " ");
         ctx.result(serializer.toJson(res));
         return;
+    }
+
+    private void listGames(Context ctx) {
+        var serializer = new Gson();
+        var req = serializer.fromJson(ctx.body(), Map.class);
+    }
+
+    private void createGame(Context ctx) {
+        var serializer = new Gson();
+        var req = serializer.fromJson(ctx.body(), Map.class);
+
     }
 
     private void clear() {

@@ -19,7 +19,7 @@ public class Server {
     public Server() {
         server = Javalin.create(config -> config.staticFiles.add("web"));
 
-        server.delete("db", ctx -> ctx.result("{}"));
+        server.delete("db", ctx -> clear());
         server.post("user", ctx -> register(ctx));
         server.post("/session", ctx -> login(ctx));
         server.delete("/session", ctx -> logout(ctx));
@@ -117,6 +117,11 @@ public class Server {
         var res = Map.of("username", username, "authToken", " ");
         ctx.result(serializer.toJson(res));
         return;
+    }
+
+    private void clear() {
+        users.clear();
+        userAuth.clear();
     }
 
     public int run(int desiredPort) {

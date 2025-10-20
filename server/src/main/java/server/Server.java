@@ -144,6 +144,12 @@ public class Server {
             return;
         }
         String gameName = (String) req.get("gameName");
+        if (gameName == null) {
+            ctx.status(400);
+            var errorRes = Map.of("message", "Error: Game name is required!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
         int gameID = 123;
         GameData newGame = new GameData(gameID, null, null, gameName);
         games.add(newGame);

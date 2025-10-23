@@ -1,9 +1,11 @@
 package server;
 
+import model.GameData;
+
 import com.google.gson.Gson;
 import io.javalin.*;
 import io.javalin.http.Context;
-import org.eclipse.jetty.server.Authentication;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +27,7 @@ public class Server {
         server.post("/session", ctx -> login(ctx));
         server.delete("/session", ctx -> logout(ctx));
         server.post("/game", ctx -> createGame(ctx));
+        server.put("/game", ctx -> joinGame(ctx));
 
     }
 
@@ -101,7 +104,6 @@ public class Server {
         for (Map.Entry<String, String> entry : userAuth.entrySet()) {
             if (authToken.equals(entry.getValue())) {
                 username = entry.getKey();
-                userAuth.remove(entry.getKey());
                 break;
             }
         }
@@ -157,6 +159,40 @@ public class Server {
         var res = Map.of("gameID", gameID);
         ctx.result(serializer.toJson(res));
         return;
+    }
+
+    private void joinGame(Context ctx) {
+        var serializer = new Gson();
+        var req = serializer.fromJson(ctx.body(), Map.class);
+        String authToken = ctx.header("authorization");
+        String username = userLoggedIn(authToken);
+        if (username == null) {
+            ctx.status(401);
+            var errorRes = Map.of("message", "Error: User not logged in!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
+        int gameID;
+        try {
+            gameID = (int) req.get("gameID");
+        } catch (Exception e) {
+            ctx.status(400);
+            var errorRes = Map.of("message", "Error: Please include a game ID!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
+        GameData thisGame = null;
+        for (GameData gameData : games) {
+            if (gameData.getGameID() == gameID) {
+                thisGame = gameData;
+            }
+        }
+        if (thisGame == null) {
+            ctx.status(400);
+            var errorRes = Map.of("message", "Error: Game not found!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
     }
 
     private void clear() {

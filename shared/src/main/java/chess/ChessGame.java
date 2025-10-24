@@ -155,6 +155,24 @@ public class ChessGame {
         return null;
     }
 
+    private boolean isPositionUnderAttack(ChessPosition position, TeamColor teamColor) {
+        for (int i = 1; i < 9; i++) {
+            for (int j = 1; j < 9; j++) {
+                ChessPiece currPiece = board.getPiece(new ChessPosition(i, j));
+                if (currPiece == null || currPiece.getTeamColor() == teamColor) {
+                    continue;
+                }
+                Collection<ChessMove> moves = currPiece.pieceMoves(board, new ChessPosition(i, j));
+                for (ChessMove move : moves) {
+                    if (move.getEndPosition().equals(position)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Determines if the given team is in check
      *
@@ -167,21 +185,8 @@ public class ChessGame {
         if (teamKing == null) {
             throw new RuntimeException("No King found");
         }
-        for (int i = 1; i < 9; i++) {
-            for (int j = 1; j < 9; j++) {
-                ChessPiece currPiece = board.getPiece(new ChessPosition(i, j));
-                if (currPiece == null) { continue; }
-                if (currPiece.getTeamColor() != teamColor) {
-                    Collection<ChessMove> moves = currPiece.pieceMoves(board, new ChessPosition(i, j));
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition().equals(teamKing)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+
+        return isPositionUnderAttack(teamKing, teamColor);
 //        throw new RuntimeException("Not implemented");
     }
 

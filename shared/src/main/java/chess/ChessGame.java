@@ -251,7 +251,6 @@ public class ChessGame {
                 }
             }
         }
-        // TODO: go through all pieces to see if there are no possible movese
         return true;
     }
 

@@ -18,6 +18,8 @@ public class Server {
     private Map<String, UserData> users = new HashMap<>();
     private Map<String, String> userAuth = new HashMap<>();
     private List<GameData> games = new ArrayList<>();
+    private int currGame = 100;
+    private int currAuth = 0;
 
     public Server() {
         server = Javalin.create(config -> config.staticFiles.add("web"));
@@ -28,6 +30,7 @@ public class Server {
         server.delete("/session", ctx -> logout(ctx));
         server.post("/game", ctx -> createGame(ctx));
         server.put("/game", ctx -> joinGame(ctx));
+        server.get("/game", ctx -> listGames(ctx));
 
     }
 
@@ -55,8 +58,10 @@ public class Server {
         }
         UserData newUser = new UserData(username, password);
         users.put(username, newUser);
-        userAuth.put(username, "xyz");
-        var res = Map.of("username", username, "authToken", "xyz");
+        String currUserAuth = String.valueOf(currAuth);
+        userAuth.put(username, currUserAuth);
+        currAuth++;
+        var res = Map.of("username", username, "authToken", currUserAuth);
         ctx.result(serializer.toJson(res));
     }
 
@@ -80,8 +85,10 @@ public class Server {
         }
         if (userAlreadyExists(username)) {
             if (users.get(username).password.equals(password)) {
-                userAuth.put(username, "xyz");
-                var res = Map.of("username", username, "authToken", "xyz");
+                String currUserAuth = String.valueOf(currAuth);
+                userAuth.put(username, currUserAuth);
+                currAuth++;
+                var res = Map.of("username", username, "authToken", currUserAuth);
                 ctx.result(serializer.toJson(res));
                 return;
             }
@@ -124,15 +131,12 @@ public class Server {
         }
 //        UserData currentUser = users.remove(username);
 //        users.put(username, new UserData(username, currentUser.password));
+        userAuth.remove(username);
         var res = Map.of("username", username, "authToken", " ");
         ctx.result(serializer.toJson(res));
         return;
     }
 
-    private void listGames(Context ctx) {
-        var serializer = new Gson();
-        var req = serializer.fromJson(ctx.body(), Map.class);
-    }
 
     private void createGame(Context ctx) {
         var serializer = new Gson();
@@ -152,12 +156,13 @@ public class Server {
             ctx.result(serializer.toJson(errorRes));
             return;
         }
-        int gameID = 123;
+        int gameID = currGame;
         GameData newGame = new GameData(gameID, null, null, gameName);
         games.add(newGame);
         ctx.status(200);
         var res = Map.of("gameID", gameID);
         ctx.result(serializer.toJson(res));
+        currGame++;
         return;
     }
 
@@ -174,7 +179,14 @@ public class Server {
         }
         int gameID;
         try {
-            gameID = (int) req.get("gameID");
+            Object gameIDObj = req.get("gameID");
+            if (gameIDObj instanceof Double) {
+                gameID = ((Double) gameIDObj).intValue();
+            } else if (gameIDObj instanceof Integer) {
+                gameID = (Integer) gameIDObj;
+            } else {
+                throw new IllegalArgumentException("Invalid gameID type");
+            }
         } catch (Exception e) {
             ctx.status(400);
             var errorRes = Map.of("message", "Error: Please include a game ID!");
@@ -185,6 +197,8 @@ public class Server {
         for (GameData gameData : games) {
             if (gameData.getGameID() == gameID) {
                 thisGame = gameData;
+                games.remove(gameData);
+                break;
             }
         }
         if (thisGame == null) {
@@ -193,11 +207,56 @@ public class Server {
             ctx.result(serializer.toJson(errorRes));
             return;
         }
+        String playerColor = (String) req.get("playerColor");
+        if (playerColor == null) {
+            ctx.status(400);
+            var errorRes = Map.of("message", "Error: Invalid color");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
+        if (playerColor.equals("BLACK")) {
+            if (thisGame.getBlackUsername() != null) {
+                ctx.status(403);
+                var errorRes = Map.of("message", "Error: Player color taken!");
+                ctx.result(serializer.toJson(errorRes));
+                return;
+            }
+            GameData newGame = new GameData(gameID, thisGame.getWhiteUsername(), username, thisGame.getGameName());
+            games.add(newGame);
+        }
+        else if (playerColor.equals("WHITE")) {
+            if (thisGame.getWhiteUsername() != null) {
+                ctx.status(403);
+                var errorRes = Map.of("message", "Error: Player color taken!");
+                ctx.result(serializer.toJson(errorRes));
+                return;
+            }
+            GameData newGame = new GameData(gameID, username, thisGame.getBlackUsername(), thisGame.getGameName());
+            games.add(newGame);
+        }
+        return;
+    }
+
+    private void listGames(Context ctx) {
+        var serializer = new Gson();
+        var req = serializer.fromJson(ctx.body(), Map.class);
+        String authToken = ctx.header("authorization");
+        String username = userLoggedIn(authToken);
+        if (username == null) {
+            ctx.status(401);
+            var errorRes = Map.of("message", "Error: User not logged in!");
+            ctx.result(serializer.toJson(errorRes));
+            return;
+        }
+        var res = Map.of("games", games);
+        ctx.result(serializer.toJson(res));
+        return;
     }
 
     private void clear() {
         users.clear();
         userAuth.clear();
+        games.clear();
     }
 
     public int run(int desiredPort) {

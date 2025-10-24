@@ -15,9 +15,13 @@ public class UserService {
 
     public RegisterResult register(String username, String password) throws DataAccessException {
         if (username == null || password == null) {
-            throw new DataAccessException("Username and password cannot be null");
+            throw new DataAccessException("Error: bad request");
         }
-        UserData user = new UserData(username, password);
+        UserData user = dataAccess.getUser(username);
+        if (user != null) {
+            throw new DataAccessException("Error: already taken");
+        }
+        user = new UserData(username, password);
         dataAccess.createUser(user);
 
         String authToken = generateAuthToken();
@@ -28,14 +32,14 @@ public class UserService {
 
     public RegisterResult login(String username, String password) throws DataAccessException {
         if (username == null || password == null) {
-            throw new DataAccessException("Username and password cannot be null");
+            throw new DataAccessException("bad request");
         }
         UserData user = dataAccess.getUser(username);
         if (user == null) {
-            throw new DataAccessException("User not found");
+            throw new DataAccessException("unauthorized");
         }
         if (!user.password().equals(password)) {
-            throw new DataAccessException("Username and password do not match");
+            throw new DataAccessException("Error: unauthorized");
         }
         String authToken = generateAuthToken();
         AuthData userAuth = new AuthData(authToken, user.username());
@@ -45,7 +49,7 @@ public class UserService {
 
     public void logout(String authToken) throws DataAccessException {
         if (dataAccess.getAuth(authToken) == null) {
-            throw new DataAccessException("User not logged in");
+            throw new DataAccessException("Error: unauthorized");
         }
         dataAccess.deleteAuth(authToken);
     }

@@ -21,7 +21,7 @@ public interface DataAccess {
 
     // Game operations
     void createGame(GameData game) throws DataAccessException;
-    GameData getGame(String gameName) throws DataAccessException;
+    GameData getGame(int gameID) throws DataAccessException;
     List<GameData> listGames() throws DataAccessException;
     void update(GameData game) throws DataAccessException;
 }

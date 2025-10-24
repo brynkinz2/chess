@@ -1,6 +1,10 @@
 package server;
 
+import dataaccess.DataAccess;
+import dataaccess.DataAccessException;
+import dataaccess.MemoryDataAccess;
 import model.*;
+import service.*;
 
 import com.google.gson.Gson;
 import io.javalin.*;
@@ -15,6 +19,9 @@ import java.util.Map;
 public class Server {
 
     private final Javalin server;
+    private final UserService userService;
+    private final GameService gameService;
+    private final ClearService clearService;
     private Map<String, UserData> users = new HashMap<>();
     private Map<String, String> authTokens = new HashMap<>();
     private List<GameData> games = new ArrayList<>();
@@ -22,42 +29,37 @@ public class Server {
     private int currAuth = 0;
 
     public Server() {
+        DataAccess dataAccess = new MemoryDataAccess();
+        userService = new UserService(dataAccess);
+        gameService = new GameService(dataAccess);
+        clearService = new ClearService(dataAccess);
+
+
         server = Javalin.create(config -> config.staticFiles.add("web"));
 
-        server.delete("db", ctx -> clear());
-        server.post("user", ctx -> register(ctx));
-        server.post("/session", ctx -> login(ctx));
-        server.delete("/session", ctx -> logout(ctx));
-        server.post("/game", ctx -> createGame(ctx));
-        server.put("/game", ctx -> joinGame(ctx));
-        server.get("/game", ctx -> listGames(ctx));
+        server.delete("db", this::handleClear);
+        server.post("user", this::handleRegister);
+        server.post("/session", this::handleLogin);
+        server.delete("/session", this::handleLogout);
+        server.post("/game", this::handleCreateGame);
+        server.put("/game", this::handleJoinGame);
+        server.get("/game", this::handleListGames);
 
     }
 
-    private void register(Context ctx) {
+    private void handleRegister(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
-        String username = (String) req.get("username");
-        String password = (String) req.get("password");
-        if (password == null) {
-            ctx.status(400);
-            var errorRes = Map.of("message", "Error: bad request");
-            ctx.result(serializer.toJson(errorRes));
-            return;
+        try {
+            var result = userService.register(
+                    (String) req.get("username"),
+                    (String) req.get("password")
+            );
+            ctx.status(200);
+            ctx.result(serializer.toJson(result));
+        } catch (DataAccessException e) {
+            handleError(ctx, e);
         }
-        if (userAlreadyExists(username)) {
-            ctx.status(403);
-            var errorRes = Map.of("message", "Error: user already taken");
-            ctx.result(serializer.toJson(errorRes));
-            return;
-        }
-        UserData newUser = new UserData(username, password);
-        users.put(username, newUser);
-        String currUserAuth = String.valueOf(currAuth);
-        authTokens.put(currUserAuth, username);
-        currAuth++;
-        var res = Map.of("username", username, "authToken", currUserAuth);
-        ctx.result(serializer.toJson(res));
     }
 
     private boolean userAlreadyExists(String username) {
@@ -67,37 +69,18 @@ public class Server {
         return false;
     }
 
-    private void login(Context ctx) {
+    private void handleLogin(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
-        String username = (String) req.get("username");
-        String password = (String) req.get("password");
-        if (username == null || password == null) {
-            ctx.status(400);
-            var errorRes = Map.of("message", "Error: Please include a username and password.");
-            ctx.result(serializer.toJson(errorRes));
-            return;
-        }
-        if (userAlreadyExists(username)) {
-            if (users.get(username).password().equals(password)) {
-                String currUserAuth = String.valueOf(currAuth);
-                authTokens.put(currUserAuth, username);
-                currAuth++;
-                var res = Map.of("username", username, "authToken", currUserAuth);
-                ctx.result(serializer.toJson(res));
-                return;
-            }
-            else {
-                ctx.status(401);
-                var errorRes = Map.of("message", "Error: Username and password do not match!");
-                ctx.result(serializer.toJson(errorRes));
-                return;
-            }
-        }
-        else {
-            ctx.status(401);
-            var errorRes = Map.of("message", "Error: Username does not exist!");
-            ctx.result(serializer.toJson(errorRes));
+        try {
+            var result = userService.login(
+                    (String) req.get("username"),
+                    (String) req.get("password")
+            );
+            ctx.status(200);
+            ctx.result(serializer.toJson(result));
+        } catch (DataAccessException e) {
+            handleError(ctx, e);
         }
     }
 
@@ -105,53 +88,57 @@ public class Server {
         return authTokens.get(authToken);
     }
 
-    private void logout(Context ctx) {
+    private void handleLogout(Context ctx) {
         var serializer = new Gson();
-//        var req = serializer.fromJson(ctx.body(), String.class);
-        String authToken = ctx.header("authorization");
-        boolean found = false;
-        String username = userLoggedIn(authToken);
-        if (username == null) {
-            ctx.status(401);
-            var errorRes = Map.of("message", "Error: User not logged in!");
-            ctx.result(serializer.toJson(errorRes));
+        try {
+            String authToken = ctx.header("authorization");
+            userService.logout(authToken);
+            ctx.status(200);
             return;
+        } catch (DataAccessException e) {
+            handleError(ctx, e);
         }
-//        UserData currentUser = users.remove(username);
-//        users.put(username, new UserData(username, currentUser.password));
-        authTokens.remove(authToken);
-        var res = Map.of("username", username, "authToken", " ");
-        ctx.result(serializer.toJson(res));
-        return;
     }
 
-
-    private void createGame(Context ctx) {
+    private void handleCreateGame(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
         String authToken = ctx.header("authorization");
-        String username = userLoggedIn(authToken);
-        if (username == null) {
-            ctx.status(401);
-            var errorRes = Map.of("message", "Error: User not logged in!");
-            ctx.result(serializer.toJson(errorRes));
-            return;
+        try {
+            String gameName = (String) req.get("gameName");
+            var result = gameService.createGame(authToken, gameName);
+            ctx.status(200);
+            ctx.result(serializer.toJson(result));
+        } catch (DataAccessException e) {
+            handleError(ctx, e);
         }
-        String gameName = (String) req.get("gameName");
-        if (gameName == null) {
-            ctx.status(400);
-            var errorRes = Map.of("message", "Error: Game name is required!");
-            ctx.result(serializer.toJson(errorRes));
-            return;
+    }
+
+    private void handleJoinGame(Context ctx) {
+        var serializer = new Gson();
+        var req = serializer.fromJson(ctx.body(), Map.class);
+        String authToken = ctx.header("authorization");
+        try {
+            // Handle gameID (could be Double or Integer from Gson)
+            int gameID;
+            Object gameIDObj = req.get("gameID");
+            if (gameIDObj instanceof Double) {
+                gameID = ((Double) gameIDObj).intValue();
+            } else if (gameIDObj instanceof Integer) {
+                gameID = (Integer) gameIDObj;
+            } else {
+                throw new DataAccessException("bad request: Please include a game ID");
+            }
+            String playerColor = (String) req.get("playerColor");
+            if (playerColor == null) {
+                throw new DataAccessException("bad request: Please include a player color");
+            }
+            gameService.joinGame(authToken, gameID, playerColor);
+            ctx.status(200);
+            ctx.result("{}");
+        } catch (DataAccessException e) {
+                handleError(ctx, e);
         }
-        int gameID = currGame;
-        GameData newGame = new GameData(gameID, null, null, gameName);
-        games.add(newGame);
-        ctx.status(200);
-        var res = Map.of("gameID", gameID);
-        ctx.result(serializer.toJson(res));
-        currGame++;
-        return;
     }
 
     private void joinGame(Context ctx) {
@@ -225,6 +212,19 @@ public class Server {
         return;
     }
 
+    private void handleListGames(Context ctx) {
+        var serializer = new Gson();
+        var req = serializer.fromJson(ctx.body(), Map.class);
+        String authToken = ctx.header("authorization");
+        try {
+            var result = gameService.listGames(authToken);
+            ctx.status(200);
+            ctx.result(serializer.toJson(result));
+        } catch (DataAccessException e) {
+            handleError(ctx, e);
+        }
+    }
+
     private void listGames(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
@@ -241,10 +241,28 @@ public class Server {
         return;
     }
 
-    private void clear() {
-        users.clear();
-        authTokens.clear();
-        games.clear();
+    private void handleError(Context ctx, DataAccessException e) {
+        var serializer = new Gson();
+        if (e.getMessage().contains("already")) {
+            ctx.status(403);
+        } else if (e.getMessage().contains("unauthorized")) {
+            ctx.status(401);
+        } else if (e.getMessage().contains("bad request") || e.getMessage().contains("required")) {
+            ctx.status(400);
+        } else {
+            ctx.status(500);
+        }
+        ctx.result(serializer.toJson(Map.of("message", "Error: " + e.getMessage())));
+    }
+
+    private void handleClear(Context ctx) throws DataAccessException {
+        try {
+            clearService.clear();
+            ctx.status(200);
+            ctx.result("{}");
+        } catch (DataAccessException e) {
+            handleError(ctx, e);
+        }
     }
 
     public int run(int desiredPort) {

@@ -72,10 +72,35 @@ public class UserServiceTest {
     }
 
     @Test
-    public void loginUsername() throws DataAccessException {
+    public void loginInvalidUser() throws DataAccessException {
         String username = "ExistingUser";
         String password = "passcode";
 
         assertThrows(DataAccessException.class, () -> userService.login(username, password));
+    }
+
+    // LOGOUT TESTS
+
+    @Test
+    public void logoutValid() throws DataAccessException {
+        String username = "ExistingUser";
+        String password = "passcode";
+        var res = userService.register(username, password);
+        String authToken = res.authToken();
+
+        userService.logout(authToken);
+        assertNull(dataAccess.getAuth(authToken));
+    }
+
+    @Test
+    public void logoutInvalid() throws DataAccessException {
+        String username = "ExistingUser";
+        String password = "passcode";
+        var res = userService.register(username, password);
+        String authToken = res.authToken();
+        // First logout should work
+        userService.logout(authToken);
+        // Second one should throw an error
+        assertThrows(DataAccessException.class, () -> userService.logout(authToken));
     }
 }

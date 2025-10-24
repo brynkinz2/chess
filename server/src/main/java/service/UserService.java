@@ -43,6 +43,13 @@ public class UserService {
         return new RegisterResult(user.username(), authToken);
     }
 
+    public void logout(String authToken) throws DataAccessException {
+        if (dataAccess.getAuth(authToken) == null) {
+            throw new DataAccessException("User not logged in");
+        }
+        dataAccess.deleteAuth(authToken);
+    }
+
 
 
     private String generateAuthToken() {

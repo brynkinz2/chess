@@ -13,17 +13,34 @@ public class UserService {
         this.dataAccess = dataAccess;
     }
 
-    public RegisterResult register(String testUser, String password) throws DataAccessException {
-        if (testUser == null || password == null) {
+    public RegisterResult register(String username, String password) throws DataAccessException {
+        if (username == null || password == null) {
             throw new DataAccessException("Username and password cannot be null");
         }
-        UserData user = new UserData(testUser, password);
+        UserData user = new UserData(username, password);
         dataAccess.createUser(user);
 
         String authToken = generateAuthToken();
         AuthData userAuth = new AuthData(authToken, user.username());
         dataAccess.createAuth(authToken, userAuth);
-        return new RegisterResult(testUser, authToken);
+        return new RegisterResult(username, authToken);
+    }
+
+    public RegisterResult login(String username, String password) throws DataAccessException {
+        if (username == null || password == null) {
+            throw new DataAccessException("Username and password cannot be null");
+        }
+        UserData user = dataAccess.getUser(username);
+        if (user == null) {
+            throw new DataAccessException("User not found");
+        }
+        if (!user.password().equals(password)) {
+            throw new DataAccessException("Username and password do not match");
+        }
+        String authToken = generateAuthToken();
+        AuthData userAuth = new AuthData(authToken, user.username());
+        dataAccess.createAuth(authToken, userAuth);
+        return new RegisterResult(user.username(), authToken);
     }
 
 

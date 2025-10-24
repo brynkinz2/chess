@@ -50,4 +50,32 @@ public class UserServiceTest {
 
     // LOGIN TESTS
 
+    @Test
+    public void loginExistingUser() throws DataAccessException {
+        String username = "ExistingUser";
+        String password = "passcode";
+        userService.register(username, password);
+
+        var result = userService.login(username, password);
+        assertNotNull(result);
+        assertEquals(username, result.username());
+        assertNotNull(result.authToken());
+    }
+
+    @Test
+    public void loginInvalidPassword() throws DataAccessException {
+        String username = "ExistingUser";
+        String password = "passcode";
+        userService.register(username, password);
+
+        assertThrows(DataAccessException.class, () -> userService.login(username, "invalid"));
+    }
+
+    @Test
+    public void loginUsername() throws DataAccessException {
+        String username = "ExistingUser";
+        String password = "passcode";
+
+        assertThrows(DataAccessException.class, () -> userService.login(username, password));
+    }
 }

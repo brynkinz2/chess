@@ -142,6 +142,19 @@ public class ChessGame {
         throw new InvalidMoveException("Invalid move: " + move);
     }
 
+    private ChessPosition findKing(TeamColor teamColor) {
+        for (int i = 1; i < 9; i++) {
+            for (int j = 1; j < 9; j++) {
+                ChessPiece currPiece = board.getPiece(new ChessPosition(i, j));
+                if (currPiece != null && currPiece.getTeamColor() == teamColor
+                        && currPiece.getPieceType() == ChessPiece.PieceType.KING) {
+                    return new ChessPosition(i, j);
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Determines if the given team is in check
      *
@@ -150,16 +163,7 @@ public class ChessGame {
      */
     public boolean isInCheck(TeamColor teamColor) {
         Collection<ChessPiece> opposingPieces = new ArrayList<>();
-        ChessPosition teamKing = null;
-        for (int i = 1; i < 9; i++) {
-            for (int j = 1; j < 9; j++) {
-                ChessPiece currPiece = board.getPiece(new ChessPosition(i, j));
-                if (currPiece == null) { continue; }
-                if (currPiece.getTeamColor() == teamColor && currPiece.getPieceType() == ChessPiece.PieceType.KING) {
-                    teamKing = new ChessPosition(i, j);
-                }
-            }
-        }
+        ChessPosition teamKing = findKing(teamColor);
         if (teamKing == null) {
             throw new RuntimeException("No King found");
         }

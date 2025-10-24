@@ -62,13 +62,6 @@ public class Server {
         }
     }
 
-    private boolean userAlreadyExists(String username) {
-        if (users.containsKey(username)) {
-            return true;
-        }
-        return false;
-    }
-
     private void handleLogin(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
@@ -141,77 +134,6 @@ public class Server {
         }
     }
 
-    private void joinGame(Context ctx) {
-        var serializer = new Gson();
-        var req = serializer.fromJson(ctx.body(), Map.class);
-        String authToken = ctx.header("authorization");
-        String username = userLoggedIn(authToken);
-        if (username == null) {
-            ctx.status(401);
-            var errorRes = Map.of("message", "Error: User not logged in!");
-            ctx.result(serializer.toJson(errorRes));
-            return;
-        }
-        int gameID;
-        try {
-            Object gameIDObj = req.get("gameID");
-            if (gameIDObj instanceof Double) {
-                gameID = ((Double) gameIDObj).intValue();
-            } else if (gameIDObj instanceof Integer) {
-                gameID = (Integer) gameIDObj;
-            } else {
-                throw new IllegalArgumentException("Invalid gameID type");
-            }
-        } catch (Exception e) {
-            ctx.status(400);
-            var errorRes = Map.of("message", "Error: Please include a game ID!");
-            ctx.result(serializer.toJson(errorRes));
-            return;
-        }
-        GameData thisGame = null;
-        for (GameData gameData : games) {
-            if (gameData.gameID() == gameID) {
-                thisGame = gameData;
-                games.remove(gameData);
-                break;
-            }
-        }
-        if (thisGame == null) {
-            ctx.status(400);
-            var errorRes = Map.of("message", "Error: Game not found!");
-            ctx.result(serializer.toJson(errorRes));
-            return;
-        }
-        String playerColor = (String) req.get("playerColor");
-        if (playerColor == null) {
-            ctx.status(400);
-            var errorRes = Map.of("message", "Error: Invalid color");
-            ctx.result(serializer.toJson(errorRes));
-            return;
-        }
-        if (playerColor.equals("BLACK")) {
-            if (thisGame.blackUsername() != null) {
-                ctx.status(403);
-                var errorRes = Map.of("message", "Error: Player color taken!");
-                ctx.result(serializer.toJson(errorRes));
-                return;
-            }
-            GameData newGame = new GameData(gameID, thisGame.whiteUsername(), username, thisGame.gameName());
-            games.add(newGame);
-        }
-        else if (playerColor.equals("WHITE")) {
-            if (thisGame.whiteUsername() != null) {
-                ctx.status(403);
-                var errorRes = Map.of("message", "Error: Player color taken!");
-                ctx.result(serializer.toJson(errorRes));
-                return;
-            }
-            GameData newGame = new GameData(gameID, username, thisGame.blackUsername(), thisGame.gameName());
-            games.add(newGame);
-        }
-        return;
-    }
-
     private void handleListGames(Context ctx) {
         var serializer = new Gson();
         var req = serializer.fromJson(ctx.body(), Map.class);
@@ -223,22 +145,6 @@ public class Server {
         } catch (DataAccessException e) {
             handleError(ctx, e);
         }
-    }
-
-    private void listGames(Context ctx) {
-        var serializer = new Gson();
-        var req = serializer.fromJson(ctx.body(), Map.class);
-        String authToken = ctx.header("authorization");
-        String username = userLoggedIn(authToken);
-        if (username == null) {
-            ctx.status(401);
-            var errorRes = Map.of("message", "Error: User not logged in!");
-            ctx.result(serializer.toJson(errorRes));
-            return;
-        }
-        var res = Map.of("games", games);
-        ctx.result(serializer.toJson(res));
-        return;
     }
 
     private void handleError(Context ctx, DataAccessException e) {

@@ -1,6 +1,6 @@
 package server;
 
-import model.GameData;
+import model.*;
 
 import com.google.gson.Gson;
 import io.javalin.*;
@@ -16,7 +16,7 @@ public class Server {
 
     private final Javalin server;
     private Map<String, UserData> users = new HashMap<>();
-    private Map<String, String> userAuth = new HashMap<>();
+    private Map<String, String> authTokens = new HashMap<>();
     private List<GameData> games = new ArrayList<>();
     private int currGame = 100;
     private int currAuth = 0;
@@ -32,11 +32,6 @@ public class Server {
         server.put("/game", ctx -> joinGame(ctx));
         server.get("/game", ctx -> listGames(ctx));
 
-    }
-
-    record UserData(
-            String username,
-            String password){
     }
 
     private void register(Context ctx) {
@@ -59,7 +54,7 @@ public class Server {
         UserData newUser = new UserData(username, password);
         users.put(username, newUser);
         String currUserAuth = String.valueOf(currAuth);
-        userAuth.put(username, currUserAuth);
+        authTokens.put(currUserAuth, username);
         currAuth++;
         var res = Map.of("username", username, "authToken", currUserAuth);
         ctx.result(serializer.toJson(res));
@@ -84,9 +79,9 @@ public class Server {
             return;
         }
         if (userAlreadyExists(username)) {
-            if (users.get(username).password.equals(password)) {
+            if (users.get(username).password().equals(password)) {
                 String currUserAuth = String.valueOf(currAuth);
-                userAuth.put(username, currUserAuth);
+                authTokens.put(currUserAuth, username);
                 currAuth++;
                 var res = Map.of("username", username, "authToken", currUserAuth);
                 ctx.result(serializer.toJson(res));
@@ -107,14 +102,7 @@ public class Server {
     }
 
     private String userLoggedIn(String authToken) {
-        String username = null;
-        for (Map.Entry<String, String> entry : userAuth.entrySet()) {
-            if (authToken.equals(entry.getValue())) {
-                username = entry.getKey();
-                break;
-            }
-        }
-        return username;
+        return authTokens.get(authToken);
     }
 
     private void logout(Context ctx) {
@@ -131,7 +119,7 @@ public class Server {
         }
 //        UserData currentUser = users.remove(username);
 //        users.put(username, new UserData(username, currentUser.password));
-        userAuth.remove(username);
+        authTokens.remove(authToken);
         var res = Map.of("username", username, "authToken", " ");
         ctx.result(serializer.toJson(res));
         return;
@@ -195,7 +183,7 @@ public class Server {
         }
         GameData thisGame = null;
         for (GameData gameData : games) {
-            if (gameData.getGameID() == gameID) {
+            if (gameData.gameID() == gameID) {
                 thisGame = gameData;
                 games.remove(gameData);
                 break;
@@ -215,23 +203,23 @@ public class Server {
             return;
         }
         if (playerColor.equals("BLACK")) {
-            if (thisGame.getBlackUsername() != null) {
+            if (thisGame.blackUsername() != null) {
                 ctx.status(403);
                 var errorRes = Map.of("message", "Error: Player color taken!");
                 ctx.result(serializer.toJson(errorRes));
                 return;
             }
-            GameData newGame = new GameData(gameID, thisGame.getWhiteUsername(), username, thisGame.getGameName());
+            GameData newGame = new GameData(gameID, thisGame.whiteUsername(), username, thisGame.gameName());
             games.add(newGame);
         }
         else if (playerColor.equals("WHITE")) {
-            if (thisGame.getWhiteUsername() != null) {
+            if (thisGame.whiteUsername() != null) {
                 ctx.status(403);
                 var errorRes = Map.of("message", "Error: Player color taken!");
                 ctx.result(serializer.toJson(errorRes));
                 return;
             }
-            GameData newGame = new GameData(gameID, username, thisGame.getBlackUsername(), thisGame.getGameName());
+            GameData newGame = new GameData(gameID, username, thisGame.blackUsername(), thisGame.gameName());
             games.add(newGame);
         }
         return;
@@ -255,7 +243,7 @@ public class Server {
 
     private void clear() {
         users.clear();
-        userAuth.clear();
+        authTokens.clear();
         games.clear();
     }
 

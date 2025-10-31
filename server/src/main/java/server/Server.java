@@ -3,6 +3,7 @@ package server;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
+import dataaccess.MySQLDataAccess;
 import model.*;
 import service.*;
 
@@ -29,7 +30,12 @@ public class Server {
     private int currAuth = 0;
 
     public Server() {
-        DataAccess dataAccess = new MemoryDataAccess();
+        DataAccess dataAccess = null;
+        try {
+            dataAccess = new MySQLDataAccess();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
         userService = new UserService(dataAccess);
         gameService = new GameService(dataAccess);
         clearService = new ClearService(dataAccess);

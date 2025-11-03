@@ -69,54 +69,36 @@ public class ChessPiece {
             // directions this piece can move
             int directions[][] = {{1,-1}, {1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}, {0,-1}};
 
-            // loop through those direction changes, add to current row and column
-            for (int direction[] : directions) {
-                int checkRow =  currRow + direction[0];
-                int checkCol =  currCol + direction[1];
-
-                //check that we are within the bounds of the board
-                if (checkRow <= 0 || checkCol <= 0 || checkRow > 8 || checkCol > 8) {
-                    continue;
-                }
-                ChessPiece checkPiece = board.getPiece(new ChessPosition(checkRow, checkCol));
-                // if there is no piece in that spot, add it to valid moves
-                if (checkPiece == null) {
-                    moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
-                }
-                // if there is a piece that belongs to the other team, capture it
-                else if(checkPiece.pieceColor != pieceColor) {
-                    moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
-                }
-            }
+            moves = getMovesOneSpace(board, directions, currRow, currCol);
         }
         else if (piece.getPieceType() == PieceType.QUEEN) {
             // directions this piece can move
             int directions[][] = {{1,-1}, {1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}, {0,-1}};
-
-            // loop through those direction changes, add to current row and column
-            for (int direction[] : directions) {
-                int checkRow =  currRow + direction[0];
-                int checkCol =  currCol + direction[1];
-
-                // add another iteration of that direction until out of bounds
-                while (checkRow > 0 && checkCol > 0 && checkRow <= 8 && checkCol <= 8) {
-                    ChessPiece checkPiece = board.getPiece(new ChessPosition(checkRow, checkCol));
-                    // if there is no piece in that spot, add it to valid moves
-                    if (checkPiece == null) {
-                        moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
-                    }
-                    // if there is a piece that belongs to the other team, capture it and break, we cannot go further
-                    else if(checkPiece.pieceColor != pieceColor) {
-                        moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
-                        break;
-                    }
-                    else {
-                        break;
-                    }
-                    checkRow += direction[0];
-                    checkCol += direction[1];
-                }
-            }
+            moves = getMovesAllSpaces(board, directions, currRow, currCol);
+//            // loop through those direction changes, add to current row and column
+//            for (int direction[] : directions) {
+//                int checkRow =  currRow + direction[0];
+//                int checkCol =  currCol + direction[1];
+//
+//                // add another iteration of that direction until out of bounds
+//                while (checkRow > 0 && checkCol > 0 && checkRow <= 8 && checkCol <= 8) {
+//                    ChessPiece checkPiece = board.getPiece(new ChessPosition(checkRow, checkCol));
+//                    // if there is no piece in that spot, add it to valid moves
+//                    if (checkPiece == null) {
+//                        moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+//                    }
+//                    // if there is a piece that belongs to the other team, capture it and break, we cannot go further
+//                    else if(checkPiece.pieceColor != pieceColor) {
+//                        moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+//                        break;
+//                    }
+//                    else {
+//                        break;
+//                    }
+//                    checkRow += direction[0];
+//                    checkCol += direction[1];
+//                }
+//            }
         }
         else if (piece.getPieceType() == PieceType.BISHOP) {
             // directions this piece can move
@@ -254,6 +236,61 @@ public class ChessPiece {
                         moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
                     }
                 }
+            }
+        }
+        return moves;
+    }
+
+    public Collection<ChessMove> getMovesOneSpace(ChessBoard board, int[][] directions, int currRow, int currCol) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        ChessPosition myPosition = new ChessPosition(currRow, currCol);
+        // loop through those direction changes, add to current row and column
+        for (int direction[] : directions) {
+            int checkRow =  currRow + direction[0];
+            int checkCol =  currCol + direction[1];
+
+            //check that we are within the bounds of the board
+            if (checkRow <= 0 || checkCol <= 0 || checkRow > 8 || checkCol > 8) {
+                continue;
+            }
+            ChessPiece checkPiece = board.getPiece(new ChessPosition(checkRow, checkCol));
+            // if there is no piece in that spot, add it to valid moves
+            if (checkPiece == null) {
+                moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+            }
+            // if there is a piece that belongs to the other team, capture it
+            else if(checkPiece.pieceColor != pieceColor) {
+                moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+            }
+        }
+        return moves;
+    }
+
+    public Collection<ChessMove> getMovesAllSpaces(ChessBoard board, int[][] directions, int currRow, int currCol) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        ChessPosition myPosition = new ChessPosition(currRow, currCol);
+        // loop through those direction changes, add to current row and column
+        for (int direction[] : directions) {
+            int checkRow =  currRow + direction[0];
+            int checkCol =  currCol + direction[1];
+
+            // add another iteration of that direction until out of bounds
+            while (checkRow > 0 && checkCol > 0 && checkRow <= 8 && checkCol <= 8) {
+                ChessPiece checkPiece = board.getPiece(new ChessPosition(checkRow, checkCol));
+                // if there is no piece in that spot, add it to valid moves
+                if (checkPiece == null) {
+                    moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                }
+                // if there is a piece that belongs to the other team, capture it and break, we cannot go further
+                else if(checkPiece.pieceColor != pieceColor) {
+                    moves.add(new ChessMove(myPosition, new ChessPosition(checkRow, checkCol), null));
+                    break;
+                }
+                else {
+                    break;
+                }
+                checkRow += direction[0];
+                checkCol += direction[1];
             }
         }
         return moves;

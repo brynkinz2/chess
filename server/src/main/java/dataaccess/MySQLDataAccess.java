@@ -103,21 +103,20 @@ public class MySQLDataAccess implements DataAccess {
     @Override
     public UserData getUser(String username) throws DataAccessException {
         var statement = "SELECT username, password FROM user WHERE username = ?";
-        try(var conn = DatabaseManager.getConnection()) {
-            try(var stmt = conn.prepareStatement(statement)) {
-                stmt.setString(1, username);
+        try(var conn = DatabaseManager.getConnection();
+            var stmt = conn.prepareStatement(statement);
+            var result = stmt.executeQuery()) {
+            stmt.setString(1, username);
 
-                try (var result = stmt.executeQuery()) {
-                    if (result.next()) {
-                        String user = result.getString("username");
-                        String password = result.getString("password");
-                        if (user == null || password == null) {
-                            throw new DataAccessException("User not found");
-                        }
-                        return new UserData(user, password);
-                    }
+            if (result.next()) {
+                String user = result.getString("username");
+                String password = result.getString("password");
+                if (user == null || password == null) {
+                    throw new DataAccessException("User not found");
                 }
+                return new UserData(user, password);
             }
+
         } catch (SQLException e) {
             throw new DataAccessException("Error getting user: " + e.getMessage());
         }
@@ -127,12 +126,12 @@ public class MySQLDataAccess implements DataAccess {
     @Override
     public void createAuth(String authToken, AuthData authData) throws DataAccessException {
         var statement = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
-        try (var conn =DatabaseManager.getConnection()) {
-            try(var stmt = conn.prepareStatement(statement)) {
-                stmt.setString(1, authToken);
-                stmt.setString(2, authData.username());
-                stmt.executeUpdate();
-            }
+        try (var conn =DatabaseManager.getConnection();
+             var stmt = conn.prepareStatement(statement)) {
+
+            stmt.setString(1, authToken);
+            stmt.setString(2, authData.username());
+            stmt.executeUpdate();
 
         } catch (SQLException e) {
             throw new DataAccessException("Error creating auth: " + e.getMessage());
@@ -142,16 +141,15 @@ public class MySQLDataAccess implements DataAccess {
     @Override
     public AuthData getAuth(String authToken) throws DataAccessException {
         var statement = "SELECT authToken, username FROM auth WHERE authToken = ?";
-        try(var conn = DatabaseManager.getConnection()) {
-            try(var stmt = conn.prepareStatement(statement)) {
-                stmt.setString(1, authToken);
+        try(var conn = DatabaseManager.getConnection();
+            var stmt = conn.prepareStatement(statement)) {
+            stmt.setString(1, authToken);
 
-                try (var result = stmt.executeQuery()) {
-                    if (result.next()) {
-                        String foundAuth = result.getString("authToken");
-                        String username = result.getString("username");
-                        return new AuthData(foundAuth, username);
-                    }
+            try (var result = stmt.executeQuery()) {
+                if (result.next()) {
+                    String foundAuth = result.getString("authToken");
+                    String username = result.getString("username");
+                    return new AuthData(foundAuth, username);
                 }
             }
         } catch (SQLException e) {

@@ -60,7 +60,7 @@ public class GameServiceTest {
         String username = dataAccess.getAuth(authToken).username();
 
         gameService.joinGame(authToken, thisGame.gameID(), "WHITE");
-        GameData updatedGame = new GameData(thisGame.gameID(), username, thisGame.blackUsername(), thisGame.gameName());
+        GameData updatedGame = new GameData(thisGame.gameID(), username, thisGame.blackUsername(), thisGame.gameName(), thisGame.game());
 
         assertEquals(dataAccess.getGame(thisGame.gameID()), updatedGame);
     }
@@ -73,7 +73,7 @@ public class GameServiceTest {
         String username = dataAccess.getAuth(authToken).username();
 
         gameService.joinGame(authToken, thisGame.gameID(), "BLACK");
-        GameData updatedGame = new GameData(thisGame.gameID(), thisGame.whiteUsername(), username, thisGame.gameName());
+        GameData updatedGame = new GameData(thisGame.gameID(), thisGame.whiteUsername(), username, thisGame.gameName(), thisGame.game());
 
         assertEquals(dataAccess.getGame(thisGame.gameID()), updatedGame);
     }
@@ -95,7 +95,7 @@ public class GameServiceTest {
         String username = dataAccess.getAuth(authToken).username();
         // Join should work first time
         gameService.joinGame(authToken, thisGame.gameID(), "BLACK");
-        GameData updatedGame = new GameData(thisGame.gameID(), thisGame.whiteUsername(), username, thisGame.gameName());
+        GameData updatedGame = new GameData(thisGame.gameID(), thisGame.whiteUsername(), username, thisGame.gameName(), thisGame.game());
         // throws exception on second join
         assertThrows(DataAccessException.class, () -> gameService.joinGame(authToken, thisGame.gameID(), "BLACK"));
     }
@@ -108,7 +108,7 @@ public class GameServiceTest {
         String username = dataAccess.getAuth(authToken).username();
         // Join should work first time
         gameService.joinGame(authToken, thisGame.gameID(), "WHITE");
-        GameData updatedGame = new GameData(thisGame.gameID(), username, thisGame.blackUsername(), thisGame.gameName());
+        GameData updatedGame = new GameData(thisGame.gameID(), username, thisGame.blackUsername(), thisGame.gameName(), thisGame.game());
         // throws exception on second join
         assertThrows(DataAccessException.class, () -> gameService.joinGame(authToken, thisGame.gameID(), "WHITE"));
     }

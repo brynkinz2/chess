@@ -50,7 +50,7 @@ public class UserService {
         }
 
         if (!isValid) {
-            throw new DataAccessException("Invalid password");
+            throw new DataAccessException("unauthorized: Invalid password");
         }
         String authToken = generateAuthToken();
         AuthData userAuth = new AuthData(authToken, user.username());

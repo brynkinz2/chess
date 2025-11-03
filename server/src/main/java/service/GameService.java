@@ -1,5 +1,6 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.*;
 import model.AuthData;
 import model.GameData;
@@ -22,7 +23,8 @@ public class GameService {
         }
         verifyUser(authToken);
         int currGameID = nextGameID;
-        dataAccess.createGame(new GameData(currGameID, null, null, gameName));
+        ChessGame newGame = new ChessGame();
+        dataAccess.createGame(new GameData(currGameID, null, null, gameName, newGame));
         nextGameID++;
         return new CreateGameResult(currGameID);
     }
@@ -38,13 +40,13 @@ public class GameService {
             if (game.whiteUsername() != null) {
                 throw new DataAccessException("Player color already taken");
             }
-            updatedGame = new GameData(gameID, newPlayer, game.blackUsername(), game.gameName());
+            updatedGame = new GameData(gameID, newPlayer, game.blackUsername(), game.gameName(), game.game());
         }
         else if (playerColor.equals("BLACK")) {
             if (game.blackUsername() != null) {
                 throw new DataAccessException("Player color already taken");
             }
-            updatedGame = new GameData(gameID, game.whiteUsername(), newPlayer, game.gameName());
+            updatedGame = new GameData(gameID, game.whiteUsername(), newPlayer, game.gameName(), game.game());
         }
         else {
             throw new DataAccessException("bad request : Invalid player color.");

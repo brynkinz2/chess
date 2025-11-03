@@ -83,10 +83,6 @@ public class Server {
         }
     }
 
-    private String userLoggedIn(String authToken) {
-        return authTokens.get(authToken);
-    }
-
     private void handleLogout(Context ctx) {
         var serializer = new Gson();
         try {

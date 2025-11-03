@@ -25,16 +25,31 @@ public class MySQLDataAccessTest {
     }
 
     //---------CLEAR TESTS--------
-//    @Test
-//    public void clearSuccess() throws DataAccessException {
-//        // Add stuff into tables first
-//        dataAccess.createUser(new UserData("test", "pass"));
-//        // Make sure it shows up
-//        assertNotNull(dataAccess.getUser("test"));
-//        dataAccess.clear();
-//
-////        assertNull(dataAccess);
-//    }
+    @Test
+    public void clearSuccess() throws DataAccessException {
+        // Add stuff into tables first
+        dataAccess.createUser(new UserData("test", "pass"));
+        dataAccess.createAuth("123454", new AuthData("123454", "user"));
+        dataAccess.createGame(new GameData(100, null, null , "hello", new ChessGame()));
+        // Make sure it shows up
+        assertNotNull(dataAccess.getUser("test"));
+        assertNotNull(dataAccess.getAuth("123454"));
+        assertNotNull(dataAccess.getGame(100));
+        dataAccess.clear();
+
+        assertNull(dataAccess.getUser("test"));
+        assertNull(dataAccess.getAuth("123454"));
+        assertNull(dataAccess.getGame(100));
+    }
+
+    @Test
+    public void clearTwice() throws DataAccessException {
+        dataAccess.createUser(new UserData("test", "pass"));
+        // clear first
+        dataAccess.clear();
+        // make sure it doesn't throw when cleared again
+        assertDoesNotThrow(() -> dataAccess.clear());
+    }
 
     //USER TESTS
     @Test
@@ -60,12 +75,23 @@ public class MySQLDataAccessTest {
     }
 
     @Test
-    public void getUserSuccess() throws DataAccessException {
+    public void getUserMultiple() throws DataAccessException {
         dataAccess.createUser(new UserData("test", "pass"));
-        UserData user = dataAccess.getUser("test");
-        assertNotNull(user);
-        assertEquals(user.username(), "test");
-        assertNotNull(user.password());
+        dataAccess.createUser(new UserData("test2", "pass2"));
+        dataAccess.createUser(new UserData("test3", "pass3"));
+
+        UserData user1 = dataAccess.getUser("test");
+        UserData user2 = dataAccess.getUser("test2");
+        UserData user3 = dataAccess.getUser("test3");
+
+        assertNotNull(user1);
+        assertEquals(user1.username(), "test");
+        assertEquals(user2.username(), "test2");
+        assertEquals(user3.username(), "test3");
+        // cant check password with bcrypt, check that it worked.
+        assertNotNull(user1.password());
+        assertNotNull(user2.password());
+        assertNotNull(user3.password());
     }
 
     @Test
@@ -214,6 +240,19 @@ public class MySQLDataAccessTest {
         dataAccess.update(updated);
         assertEquals("testUser", dataAccess.getGame(100).whiteUsername());
         assertEquals("test2", dataAccess.getGame(100).blackUsername());
+    }
+
+    @Test
+    public void updateGameFailure() throws DataAccessException {
+        ChessGame chess = new ChessGame();
+        GameData game1 = new GameData(100, null, null, "lotsOfFun", chess);
+        dataAccess.createGame(game1);
+        // try to update with wrong gameID
+        GameData updated = new GameData(101, "testUser", "test2", "lotsOfFun", chess);
+        dataAccess.update(updated);
+        // make sure it still has old users
+        assertNull(dataAccess.getGame(100).whiteUsername());
+        assertNull(dataAccess.getGame(100).blackUsername());
     }
 
 }

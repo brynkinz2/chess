@@ -3,6 +3,7 @@ package service;
 import dataaccess.*;
 import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 
 import javax.xml.crypto.Data;
 
@@ -38,8 +39,18 @@ public class UserService {
         if (user == null) {
             throw new DataAccessException("unauthorized");
         }
-        if (!user.password().equals(password)) {
-            throw new DataAccessException("Error: unauthorized");
+        // Check if password is hashed (starts with $2a$ for BCrypt)
+        boolean isValid;
+        if (user.password().startsWith("$2a$")) {
+            // Database password - verify with BCrypt
+            isValid = BCrypt.checkpw(password, user.password());
+        } else {
+            // Memory password - plain text comparison (for backward compatibility)
+            isValid = password.equals(user.password());
+        }
+
+        if (!isValid) {
+            throw new DataAccessException("Invalid password");
         }
         String authToken = generateAuthToken();
         AuthData userAuth = new AuthData(authToken, user.username());

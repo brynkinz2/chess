@@ -209,7 +209,6 @@ public class ChessGame {
         }
 
         return isPositionUnderAttack(teamKing, teamColor);
-//        throw new RuntimeException("Not implemented");
     }
 
     /**

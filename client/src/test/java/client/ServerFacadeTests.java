@@ -42,6 +42,16 @@ public class ServerFacadeTests {
         var auth = serverFacade.register("user", "password");
 
         assertNotNull(auth);
+        assertNotNull(auth.authToken());
+        assertTrue(auth.authToken().length() > 10);
+    }
+
+    @Test
+    public void registerFailure() throws IOException {
+        var auth = serverFacade.register("user", "password");
+        assertNotNull(auth);
+        // should throw when registering same user
+        assertThrows(IOException.class, () -> serverFacade.register("user", "wrong password"));
     }
 
 }

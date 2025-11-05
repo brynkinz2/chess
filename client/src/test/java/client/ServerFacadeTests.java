@@ -63,4 +63,9 @@ public class ServerFacadeTests {
         assertTrue(auth.authToken().length() > 10);
     }
 
+    @Test
+    public void loginFailure() throws IOException {
+        assertThrows(IOException.class, () -> serverFacade.login("unregisteredUser", "pass"));
+    }
+
 }

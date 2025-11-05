@@ -8,10 +8,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 
 
+
 public class ServerFacadeTests {
 
     private static Server server;
     private static ServerFacade serverFacade;
+    private static UserData existingUser;
+    private static AuthData existingAuthData;
 
     @BeforeAll
     public static void init() {
@@ -66,6 +69,22 @@ public class ServerFacadeTests {
     @Test
     public void loginFailure() throws IOException {
         assertThrows(IOException.class, () -> serverFacade.login("unregisteredUser", "pass"));
+    }
+
+    @Test
+    public void logoutSuccess() throws IOException {
+        serverFacade.register("loggingIn", "password");
+        var auth = serverFacade.login("loggingIn", "password");
+
+        serverFacade.logout(auth.authToken());
+        // should not work the second time, already logged out
+        assertThrows(IOException.class, () -> serverFacade.logout(auth.authToken()));
+    }
+
+    @Test
+    public void logoutFailure() throws IOException {
+        // logout a user with an invalid authToken
+        assertThrows(IOException.class, () -> serverFacade.logout("randomAuth1234"));
     }
 
 }

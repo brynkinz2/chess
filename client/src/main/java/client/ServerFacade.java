@@ -18,22 +18,29 @@ public class ServerFacade {
     public AuthData register(String username, String password) throws IOException {
         var request = new UserData(username, password);
 
-        return makeRequest("/user", "POST", request, AuthData.class);
+        return makeRequest("/user", "POST", request, AuthData.class, null);
     }
 
     public AuthData login(String username, String password) throws IOException {
         var request = new UserData(username, password);
 
-        return makeRequest("/session", "POST", request, AuthData.class);
+        return makeRequest("/session", "POST", request, AuthData.class, null);
     }
 
-    private <T> T makeRequest(String path, String method, Object request, Class<T> responseClass) throws IOException {
+    public void logout(String authToken) throws IOException {
+        makeRequest("/session", "DELETE", null, AuthData.class, authToken);
+    }
+
+    private <T> T makeRequest(String path, String method, Object request, Class<T> responseClass, String authToken) throws IOException {
         URL url = new URL(serverUrl + path);
         HttpURLConnection connection =  (HttpURLConnection) url.openConnection();
 
         connection.setRequestMethod(method);
         connection.setDoOutput(true);
-
+        // handle the header
+        if (authToken != null) {
+            connection.setRequestProperty("authorization", authToken);
+        }
         // write the request body
         if (request != null) {
             connection.addRequestProperty("Content-Type", "application/json");
@@ -58,13 +65,13 @@ public class ServerFacade {
             }
         } else {
             try (InputStream is = connection.getErrorStream()) {
-                InputStreamReader isr = new InputStreamReader(is);
+//                InputStreamReader isr = new InputStreamReader(is);
                 throw new IOException("Error: " + resCode);
             }
         }
     }
 
     public void clear() throws IOException {
-        makeRequest( "/db","DELETE", null, null);
+        makeRequest( "/db","DELETE", null, null, null);
     }
 }

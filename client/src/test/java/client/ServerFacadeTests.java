@@ -54,4 +54,13 @@ public class ServerFacadeTests {
         assertThrows(IOException.class, () -> serverFacade.register("user", "wrong password"));
     }
 
+    @Test
+    public void loginSuccess() throws IOException {
+        serverFacade.register("test", "poodlelover");
+        var auth = serverFacade.login("test", "poodlelover");
+        assertNotNull(auth);
+        assertNotNull(auth.authToken());
+        assertTrue(auth.authToken().length() > 10);
+    }
+
 }

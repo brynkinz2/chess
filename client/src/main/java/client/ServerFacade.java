@@ -21,8 +21,10 @@ public class ServerFacade {
         return makeRequest("/user", "POST", request, AuthData.class);
     }
 
-    public AuthData login(String username, String password) {
-        return null;
+    public AuthData login(String username, String password) throws IOException {
+        var request = new UserData(username, password);
+
+        return makeRequest("/session", "POST", request, AuthData.class);
     }
 
     private <T> T makeRequest(String path, String method, Object request, Class<T> responseClass) throws IOException {

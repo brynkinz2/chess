@@ -1,6 +1,8 @@
 package client;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
+import model.GameData;
 import model.UserData;
 import model.AuthData;
 import java.io.*;
@@ -29,6 +31,11 @@ public class ServerFacade {
 
     public void logout(String authToken) throws IOException {
         makeRequest("/session", "DELETE", null, AuthData.class, authToken);
+    }
+
+    public GameData createGame(String gameName, String authToken) throws IOException {
+        var request = new GameData(0, null, null, gameName, new ChessGame());
+        return makeRequest("/game", "POST", request, GameData.class, authToken);
     }
 
     private <T> T makeRequest(String path, String method, Object request, Class<T> responseClass, String authToken) throws IOException {

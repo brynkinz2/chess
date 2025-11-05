@@ -87,4 +87,15 @@ public class ServerFacadeTests {
         assertThrows(IOException.class, () -> serverFacade.logout("randomAuth1234"));
     }
 
+    @Test
+    public void createGameSuccess() throws IOException {
+        var auth = serverFacade.register("user", "password");
+        var game = serverFacade.createGame("funGame", auth.authToken());
+        assertNotNull(game);
+        // check that the real game ID was updated
+        assertNotEquals(0, game.gameID());
+        // check that it came back with the same game name
+        assertEquals("funGame", game.gameName());
+    }
+
 }

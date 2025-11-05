@@ -23,10 +23,10 @@ public class GameService {
         }
         verifyUser(authToken);
         int currGameID = nextGameID;
-        ChessGame newGame = new ChessGame();
-        dataAccess.createGame(new GameData(currGameID, null, null, gameName, newGame));
+        ChessGame game = new ChessGame();
+        dataAccess.createGame(new GameData(currGameID, null, null, gameName, game));
         nextGameID++;
-        return new CreateGameResult(currGameID);
+        return new CreateGameResult(currGameID, gameName, game);
     }
 
     public void joinGame(String authToken, int gameID, String playerColor) throws DataAccessException {
@@ -70,6 +70,6 @@ public class GameService {
         return user.username();
     }
 
-    public record CreateGameResult(int gameID) {}
+    public record CreateGameResult(int gameID, String gameName, ChessGame game) {}
     public record ListGameResult(List<GameData> games) {}
 }

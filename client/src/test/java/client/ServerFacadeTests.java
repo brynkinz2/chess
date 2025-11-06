@@ -134,7 +134,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void joinGameAsWhiteSuccess() throws IOException {
+    public void joinGameBothPlayers() throws IOException {
         // start a game
         var auth = serverFacade.register("user", "password");
         var game = serverFacade.createGame("funGame1", auth.authToken());
@@ -149,6 +149,20 @@ public class ServerFacadeTests {
         games = serverFacade.listGames(auth.authToken());
         assertEquals(games.get(0).whiteUsername(), "user");
 
+        // join as black player
+        var auth2 = serverFacade.register("blackPlayer", "password");
+        serverFacade.joinGame(game.gameID(), "BLACK", auth2.authToken());
+        games = serverFacade.listGames(auth.authToken());
+        assertEquals(games.get(0).blackUsername(), "blackPlayer");
     }
 
+    @Test
+    public void joinColorAlreadyTaken() throws IOException {
+        var auth = serverFacade.register("user", "password");
+        var game = serverFacade.createGame("funGame1", auth.authToken());
+        serverFacade.joinGame(game.gameID(), "WHITE", auth.authToken());
+
+        var auth2 = serverFacade.register("blackPlayer", "password");
+        assertThrows(IOException.class, () -> serverFacade.joinGame(game.gameID(), "WHITE", auth2.authToken()));
+    }
 }

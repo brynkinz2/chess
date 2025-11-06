@@ -6,7 +6,7 @@ import model.*;
 import client.ServerFacade;
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
-
+import java.util.List;
 
 
 public class ServerFacadeTests {
@@ -96,6 +96,24 @@ public class ServerFacadeTests {
         assertNotEquals(0, game.gameID());
         // check that it came back with the same game name
         assertEquals("funGame", game.gameName());
+    }
+
+    @Test
+    public void createGameFailure() throws IOException {}
+
+    @Test
+    public void listGamesSuccess() throws IOException {
+        var auth = serverFacade.register("user", "password");
+        var game1 = serverFacade.createGame("funGame1", auth.authToken());
+        var game2 = serverFacade.createGame("funGame2", auth.authToken());
+        var game3 = serverFacade.createGame("funGame3", auth.authToken());
+
+        var games = serverFacade.listGames(auth.authToken());
+        assertNotNull(games);
+        assertEquals(3, games.size());
+        assertEquals("funGame1", games.get(0).gameName());
+        assertEquals("funGame2", games.get(1).gameName());
+        assertEquals("funGame3", games.get(2).gameName());
     }
 
 }

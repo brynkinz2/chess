@@ -7,7 +7,8 @@ import model.UserData;
 import model.AuthData;
 import java.io.*;
 import java.net.*;
-
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class ServerFacade {
@@ -36,6 +37,10 @@ public class ServerFacade {
     public GameData createGame(String gameName, String authToken) throws IOException {
         var request = new GameData(0, null, null, gameName, new ChessGame());
         return makeRequest("/game", "POST", request, GameData.class, authToken);
+    }
+
+    public gamesList listGames(String authToken) throws IOException {
+        return makeRequest("/game", "GET", null, gamesList.class, authToken);
     }
 
     private <T> T makeRequest(String path, String method, Object request, Class<T> responseClass, String authToken) throws IOException {
@@ -80,5 +85,14 @@ public class ServerFacade {
 
     public void clear() throws IOException {
         makeRequest( "/db","DELETE", null, null, null);
+    }
+
+    public record gamesList(List<GameData> games) {
+        public int size() {
+            return games.size();
+        }
+        public GameData get(int idx) {
+            return games.get(idx);
+        }
     }
 }

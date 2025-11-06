@@ -99,7 +99,10 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void createGameFailure() throws IOException {}
+    public void createGameFailure() throws IOException {
+        // try to create a game with an invalid authToken
+        assertThrows(IOException.class, () -> serverFacade.createGame("bruh", "fakeAuthToken"));
+    }
 
     @Test
     public void listGamesSuccess() throws IOException {
@@ -115,5 +118,4 @@ public class ServerFacadeTests {
         assertEquals("funGame2", games.get(1).gameName());
         assertEquals("funGame3", games.get(2).gameName());
     }
-
 }

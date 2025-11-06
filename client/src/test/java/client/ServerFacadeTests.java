@@ -107,9 +107,9 @@ public class ServerFacadeTests {
     @Test
     public void listGamesSuccess() throws IOException {
         var auth = serverFacade.register("user", "password");
-        var game1 = serverFacade.createGame("funGame1", auth.authToken());
-        var game2 = serverFacade.createGame("funGame2", auth.authToken());
-        var game3 = serverFacade.createGame("funGame3", auth.authToken());
+        serverFacade.createGame("funGame1", auth.authToken());
+        serverFacade.createGame("funGame2", auth.authToken());
+        serverFacade.createGame("funGame3", auth.authToken());
 
         var games = serverFacade.listGames(auth.authToken());
         assertNotNull(games);
@@ -118,4 +118,37 @@ public class ServerFacadeTests {
         assertEquals("funGame2", games.get(1).gameName());
         assertEquals("funGame3", games.get(2).gameName());
     }
+
+    @Test
+    public void listGamesEmptyList() throws IOException {
+        // empty games list works
+        var auth = serverFacade.register("user", "password");
+        var games = serverFacade.listGames(auth.authToken());
+        assertEquals(0, games.size());
+    }
+
+    @Test
+    public void listGamesFailure() throws IOException {
+        // listing games with a fake authToken
+        assertThrows(IOException.class, () -> serverFacade.listGames("fakeAuthToken"));
+    }
+
+    @Test
+    public void joinGameAsWhiteSuccess() throws IOException {
+        // start a game
+        var auth = serverFacade.register("user", "password");
+        var game = serverFacade.createGame("funGame1", auth.authToken());
+        var games = serverFacade.listGames(auth.authToken());
+        // verify that the whiteUsername starts as null
+        assertEquals(games.get(0).whiteUsername(), null);
+
+        // join as white player
+        serverFacade.joinGame(game.gameID(), "WHITE", auth.authToken());
+
+        // get games list again and confirm changes
+        games = serverFacade.listGames(auth.authToken());
+        assertEquals(games.get(0).whiteUsername(), "user");
+
+    }
+
 }

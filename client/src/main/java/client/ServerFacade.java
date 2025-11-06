@@ -43,6 +43,11 @@ public class ServerFacade {
         return makeRequest("/game", "GET", null, gamesList.class, authToken);
     }
 
+    public void joinGame(int gameID, String playerColor, String authToken) throws IOException {
+        var request = new joinGameRequest(gameID, playerColor);
+        makeRequest("/game", "PUT", request, null, authToken);
+    }
+
     private <T> T makeRequest(String path, String method, Object request, Class<T> responseClass, String authToken) throws IOException {
         URL url = new URL(serverUrl + path);
         HttpURLConnection connection =  (HttpURLConnection) url.openConnection();
@@ -95,4 +100,6 @@ public class ServerFacade {
             return games.get(idx);
         }
     }
+
+    public record joinGameRequest(int gameID, String playerColor) {}
 }

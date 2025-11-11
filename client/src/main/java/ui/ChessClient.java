@@ -16,6 +16,7 @@ public class ChessClient {
     private static Scanner scanner;
     private String authToken = null;
     private String username = null;
+    private List<GameData> currGamesList = null;
 
 
     public ChessClient(int port) {
@@ -36,7 +37,7 @@ public class ChessClient {
     }
 
     public void preLoginUI() {
-        System.out.print("[LOGGED_OUT] ");
+        System.out.print(RESET_TEXT_COLOR + "[LOGGED_OUT] ");
         var result = "";
         printPrompt();
         String input = scanner.nextLine();
@@ -89,14 +90,20 @@ public class ChessClient {
     }
 
     private void listGames() throws IOException {
-        var games = serverFacade.listGames(authToken);
-        for (int i = 0; i < games.size(); i++) {
-            System.out.println(RESET_TEXT_COLOR + "Game " + i + ": " + games.get(i).gameID());
+        currGamesList = serverFacade.listGames(authToken).games();
+        for (int i = 0; i < currGamesList.size(); i++) {
+            System.out.println(RESET_TEXT_COLOR + "Game " + i + ": " + currGamesList.get(i).gameID());
         }
     }
 
     private void joinGame(String[] params) throws IOException {
-        serverFacade.joinGame(Integer.parseInt(params[0]), params[1], authToken);
+        int gameID = currGamesList.get(Integer.parseInt(params[0])).gameID();
+        serverFacade.joinGame(gameID, params[1].toUpperCase(), authToken);
+    }
+
+    private void logout() throws IOException {
+        serverFacade.logout(authToken);
+        authToken = null;
     }
 
     public void eval(String input) {
@@ -111,6 +118,7 @@ public class ChessClient {
                 case "create" -> createGame(params);
                 case "list" -> listGames();
                 case "join" -> joinGame(params);
+                case "logout" -> logout();
                 default -> {
                     if (authToken == null) {
                         preLoginHelp();
@@ -120,7 +128,23 @@ public class ChessClient {
                 }
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.out.print(SET_TEXT_COLOR_MAGENTA + "Error: ");
+            if (e.getMessage().contains("401")) {
+                System.out.println("Please login first.");
+            }
+            else if (e.getMessage().contains("403")) {
+                System.out.println("Color already taken.");
+            }
+            else if (e.getMessage().contains("400") || e.getMessage().contains("input")) {
+                System.out.println("Invalid input. Please review the possible commands and needed information.");
+                if (authToken == null) {
+                    preLoginHelp();
+                } else {
+                    postLoginHelp();
+                }
+            }
+            System.out.println(e.getMessage(
+            ));
         }
     }
 }

@@ -100,7 +100,8 @@ public class ChessClient {
         GameData game = currGamesList.get(Integer.parseInt(params[0]));
         serverFacade.joinGame(game.gameID(), params[1].toUpperCase(), authToken);
         DrawChessGame drawBoard = new DrawChessGame();
-        drawBoard.drawBoard(game.game().getBoard(), true);
+        boolean whitePerspective = params[1].equalsIgnoreCase("WHITE");
+        drawBoard.drawBoard(game.game().getBoard(), whitePerspective);
     }
 
     private void logout() throws IOException {

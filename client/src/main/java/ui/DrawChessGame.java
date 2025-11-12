@@ -20,6 +20,8 @@ public class DrawChessGame {
         DrawChessGame.board = board;
         if (whitePerspective) {
             drawBoardFromWhitePerspective();
+        } else {
+            drawBoardFromBlackPerspective();
         }
     }
 
@@ -33,11 +35,25 @@ public class DrawChessGame {
 
     }
 
+    private void drawBoardFromBlackPerspective() {
+        drawBorder(false);
+
+        for (int i = 8; i >= 1; i--) {
+            drawRow(i, false);
+        }
+
+        drawBorder(false);
+    }
+
     private void drawBorder(boolean whitePerspective) {
         System.out.print(SET_BG_COLOR_DARK_GREEN + RESET_TEXT_COLOR + "   ");
 
         if (whitePerspective) {
             for (char c = 'a'; c <= 'h'; c++) {
+                System.out.print(" " + c + " ");
+            }
+        } else {
+            for (char c = 'h'; c >= 'a'; c--) {
                 System.out.print(" " + c + " ");
             }
         }
@@ -48,8 +64,14 @@ public class DrawChessGame {
         System.out.print(SET_BG_COLOR_DARK_GREEN + RESET_TEXT_COLOR + " " + row + " ");
         System.out.print(RESET_TEXT_COLOR + RESET_BG_COLOR);
 
-        for (int i = 1; i <= BOARD_WIDTH; i++) {
-            drawSquare(row, i);
+        if (whitePerspective) {
+            for (int i = 1; i <= BOARD_WIDTH; i++) {
+                drawSquare(row, i);
+            }
+        } else {
+            for (int i = 8; i >= 1; i--) {
+                drawSquare(row, i);
+            }
         }
         System.out.println(SET_BG_COLOR_DARK_GREEN + RESET_TEXT_COLOR + " " + row + " " + RESET_BG_COLOR);
     }

@@ -28,7 +28,7 @@ public class DrawChessGame {
     private void drawBoardFromWhitePerspective() {
         drawBorder(true);
 
-        for (int i = 1; i <= BOARD_WIDTH; i++) {
+        for (int i = 8; i >= 1; i--) {
             drawRow(i, true);
         }
         drawBorder(true);
@@ -38,7 +38,7 @@ public class DrawChessGame {
     private void drawBoardFromBlackPerspective() {
         drawBorder(false);
 
-        for (int i = 8; i >= 1; i--) {
+        for (int i = 1; i <= BOARD_WIDTH; i++) {
             drawRow(i, false);
         }
 

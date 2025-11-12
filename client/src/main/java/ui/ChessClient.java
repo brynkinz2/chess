@@ -86,7 +86,7 @@ public class ChessClient {
 
     private void createGame(String[] params) throws IOException {
         GameData game = serverFacade.createGame(params[0], authToken);
-        System.out.println(RESET_TEXT_COLOR + "Created game " + params[0] + " ID: " + game.gameID());
+        System.out.println(RESET_TEXT_COLOR + "Created game " + params[0]);
     }
 
     private void listGames() throws IOException {
@@ -105,6 +105,10 @@ public class ChessClient {
     }
 
     private void observeGame(String[] params) throws IOException {
+        int gameIndex = Integer.parseInt(params[0]);
+        if (gameIndex < 0 || gameIndex >= currGamesList.size()) {
+            throw new IndexOutOfBoundsException();
+        }
         GameData game = currGamesList.get(Integer.parseInt(params[0]));
         DrawChessGame drawBoard = new DrawChessGame();
         drawBoard.drawBoard(game.game().getBoard(), true);
@@ -139,7 +143,10 @@ public class ChessClient {
             }
         } catch (Exception e) {
             System.out.print(SET_TEXT_COLOR_MAGENTA + "Error: ");
-            if (e.getMessage().contains("401")) {
+            if (e instanceof IndexOutOfBoundsException) {
+                System.out.println("invalid game ID entered. Type list to see game ID's for input.");
+            }
+            else if (e.getMessage().contains("401")) {
                 System.out.println("Please login first.");
             }
             else if (e.getMessage().contains("403")) {
@@ -152,9 +159,10 @@ public class ChessClient {
                 } else {
                     postLoginHelp();
                 }
+            } else {
+                System.out.println(e.getMessage());
             }
-            System.out.println(e.getMessage(
-            ));
+            System.out.println(RESET_TEXT_COLOR);
         }
     }
 }

@@ -7,7 +7,6 @@ import model.UserData;
 import model.AuthData;
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -39,12 +38,12 @@ public class ServerFacade {
         return makeRequest("/game", "POST", request, GameData.class, authToken);
     }
 
-    public gamesList listGames(String authToken) throws IOException {
-        return makeRequest("/game", "GET", null, gamesList.class, authToken);
+    public GamesList listGames(String authToken) throws IOException {
+        return makeRequest("/game", "GET", null, GamesList.class, authToken);
     }
 
     public void joinGame(int gameID, String playerColor, String authToken) throws IOException {
-        var request = new joinGameRequest(gameID, playerColor);
+        var request = new JoinGameRequest(gameID, playerColor);
         makeRequest("/game", "PUT", request, null, authToken);
     }
 
@@ -92,7 +91,7 @@ public class ServerFacade {
         makeRequest( "/db","DELETE", null, null, null);
     }
 
-    public record gamesList(List<GameData> games) {
+    public record GamesList(List<GameData> games) {
         public int size() {
             return games.size();
         }
@@ -101,5 +100,5 @@ public class ServerFacade {
         }
     }
 
-    public record joinGameRequest(int gameID, String playerColor) {}
+    public record JoinGameRequest(int gameID, String playerColor) {}
 }

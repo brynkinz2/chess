@@ -97,8 +97,10 @@ public class ChessClient {
     }
 
     private void joinGame(String[] params) throws IOException {
-        int gameID = currGamesList.get(Integer.parseInt(params[0])).gameID();
-        serverFacade.joinGame(gameID, params[1].toUpperCase(), authToken);
+        GameData game = currGamesList.get(Integer.parseInt(params[0]));
+        serverFacade.joinGame(game.gameID(), params[1].toUpperCase(), authToken);
+        DrawChessGame drawBoard = new DrawChessGame();
+        drawBoard.drawBoard(game.game().getBoard(), true);
     }
 
     private void logout() throws IOException {

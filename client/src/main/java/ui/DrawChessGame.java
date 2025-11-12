@@ -41,7 +41,7 @@ public class DrawChessGame {
                 System.out.print(" " + c + " ");
             }
         }
-        System.out.println(" " + RESET_TEXT_COLOR + RESET_BG_COLOR);
+        System.out.println("   " + RESET_TEXT_COLOR + RESET_BG_COLOR);
     }
 
     private void drawRow(int row, boolean whitePerspective) {
@@ -51,7 +51,7 @@ public class DrawChessGame {
         for (int i = 1; i <= BOARD_WIDTH; i++) {
             drawSquare(row, i);
         }
-        System.out.print(RESET_BG_COLOR + "\n");
+        System.out.println(SET_BG_COLOR_DARK_GREEN + RESET_TEXT_COLOR + " " + row + " " + RESET_BG_COLOR);
     }
 
     private void drawSquare(int row, int col) {
@@ -68,7 +68,7 @@ public class DrawChessGame {
             boolean pieceWhite = piece.getTeamColor() == ChessGame.TeamColor.WHITE;
             String pieceColor = pieceWhite ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE;
             String prettyPiece = getPiece(pieceWhite, piece);
-            System.out.print(prettyPiece);
+            System.out.print(pieceColor + prettyPiece);
         }
 
 

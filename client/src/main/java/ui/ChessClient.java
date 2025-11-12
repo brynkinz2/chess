@@ -104,6 +104,12 @@ public class ChessClient {
         drawBoard.drawBoard(game.game().getBoard(), whitePerspective);
     }
 
+    private void observeGame(String[] params) throws IOException {
+        GameData game = currGamesList.get(Integer.parseInt(params[0]));
+        DrawChessGame drawBoard = new DrawChessGame();
+        drawBoard.drawBoard(game.game().getBoard(), true);
+    }
+
     private void logout() throws IOException {
         serverFacade.logout(authToken);
         authToken = null;
@@ -121,6 +127,7 @@ public class ChessClient {
                 case "create" -> createGame(params);
                 case "list" -> listGames();
                 case "join" -> joinGame(params);
+                case "observe" -> observeGame(params);
                 case "logout" -> logout();
                 default -> {
                     if (authToken == null) {

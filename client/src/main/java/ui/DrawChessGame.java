@@ -77,7 +77,7 @@ public class DrawChessGame {
     }
 
     private void drawSquare(int row, int col) {
-        boolean lightSquare = (row + col) % 2 == 0;
+        boolean lightSquare = (row + col) % 2 != 0;
         String squareBG = lightSquare ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
 
         ChessPiece piece = board.getPiece(new ChessPosition(row, col));
@@ -89,36 +89,23 @@ public class DrawChessGame {
         } else {
             boolean pieceWhite = piece.getTeamColor() == ChessGame.TeamColor.WHITE;
             String pieceColor = pieceWhite ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE;
-            String prettyPiece = getPiece(pieceWhite, piece);
+            String prettyPiece = getPiece(piece);
             System.out.print(pieceColor + prettyPiece);
         }
 
 
     }
 
-    private String getPiece(boolean white, ChessPiece piece) {
-        if (white) {
-            return switch (piece.getPieceType()) {
-                case KING -> WHITE_KING;
-                case QUEEN -> WHITE_QUEEN;
-                case KNIGHT -> WHITE_KNIGHT;
-                case BISHOP -> WHITE_BISHOP;
-                case ROOK -> WHITE_ROOK;
-                case PAWN -> WHITE_PAWN;
-                default -> null;
-            };
-        }
-        else {
-            return switch (piece.getPieceType()) {
-                case KING -> BLACK_KING;
-                case QUEEN -> BLACK_QUEEN;
-                case KNIGHT -> BLACK_KNIGHT;
-                case BISHOP -> BLACK_BISHOP;
-                case ROOK -> BLACK_ROOK;
-                case PAWN -> BLACK_PAWN;
-                default -> null;
-            };
-        }
+    private String getPiece(ChessPiece piece) {
+        return switch (piece.getPieceType()) {
+            case KING -> BLACK_KING;
+            case QUEEN -> BLACK_QUEEN;
+            case KNIGHT -> BLACK_KNIGHT;
+            case BISHOP -> BLACK_BISHOP;
+            case ROOK -> BLACK_ROOK;
+            case PAWN -> BLACK_PAWN;
+            default -> null;
+        };
     }
 
 }

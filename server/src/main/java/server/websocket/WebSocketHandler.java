@@ -70,11 +70,26 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             session.getRemote().sendString(new Gson().toJson(loadGameMsg));
 
             // Determine if player or observe
+            String playerColor = determinePlayerColor(gameData, username);
+            String notificationText;
+            if (playerColor == null) {
+                notificationText = String.format("%s has joined as an observer.", username);
+            }
+            else {
+                notificationText = String.format("%s has joined the game as %s.", username, playerColor);
+            }
+
             // Send NOTIFICATION to all other clients
+            Notification notification = new Notification(notificationText);
+            connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
 
 
         } catch (Exception e) {
 
         }
+    }
+
+    private String determinePlayerColor(GameData gameData, String username) {
+        return "";
     }
 }

@@ -21,4 +21,6 @@ public class ConnectionManager {
             gameConnections.values().removeIf(s -> s.equals(session));
         }
     }
+
+    public void broadcast(Integer gameID, String authToken, Session session) {}
 }

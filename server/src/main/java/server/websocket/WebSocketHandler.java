@@ -35,7 +35,7 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
 //            switch (command.getCommandType()) {
 //                case MAKE_MOVE ->
 //            }
-        } catch (Exception ex) {
+        } catch (Exception e) {
 
         }
     }
@@ -46,7 +46,35 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
         System.out.println("Connection closed");
     }
 
-    public void connect() {
+    public void connect(UserGameCommand command, Session session) {
+        try {
+            // Validate and get user info
+            AuthData auth = dataAccess.getAuth(command.getAuthToken());
+            if (auth == null) {
+                throw new DataAccessException("Invalid auth token");
+            }
+            String username = auth.username();
 
+            // Validate game exists
+            GameData gameData = dataAccess.getGame(command.getGameID());
+            if (gameData == null) {
+                throw new DataAccessException("Invalid game ID");
+            }
+//            ChessGame game = gameData.game();
+
+            // Add connection
+            connections.add(command.getGameID(), command.getAuthToken(), session);
+
+            // Send LOAD_GAME to root client
+            LoadGame loadGameMsg = new LoadGame(gameData.game());
+            session.getRemote().sendString(new Gson().toJson(loadGameMsg));
+
+            // Determine if player or observe
+            // Send NOTIFICATION to all other clients
+
+
+        } catch (Exception e) {
+
+        }
     }
 }

@@ -2,6 +2,7 @@ package server.websocket;
 
 import com.google.gson.Gson;
 import org.eclipse.jetty.websocket.api.Session;
+import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -22,5 +23,29 @@ public class ConnectionManager {
         }
     }
 
-    public void broadcast(Integer gameID, String authToken, Session session) {}
+    public void broadcast(Integer gameID, String authToken, Notification notification) throws IOException {
+        var gameConnections = connections.get(gameID);
+        if (gameConnections == null) {
+            return;
+        }
+        String json = new Gson().toJson(notification);
+        for (var gameConnection : gameConnections.entrySet()) {
+            if (!gameConnection.getKey().equals(authToken) && gameConnection.getValue().isOpen()) {
+                gameConnection.getValue().getRemote().sendString(json);
+            }
+        }
+    }
+
+    public void broadcastToAll(Integer gameID, Notification notification) throws IOException {
+        var gameConnections = connections.get(gameID);
+        if (gameConnections == null) {
+            return;
+        }
+        String json = new Gson().toJson(notification);
+        for (Session session : gameConnections.values()) {
+            if (session.isOpen()) {
+                session.getRemote().sendString(json);
+            }
+        }
+    }
 }

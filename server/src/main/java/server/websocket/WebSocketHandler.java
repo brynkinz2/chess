@@ -12,6 +12,7 @@ import dataaccess.*;
 import model.*;
 
 import java.io.IOException;
+import websocket.messages.Error;
 
 public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMessageHandler {
 
@@ -32,9 +33,9 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
     public void handleMessage(WsMessageContext ctx) {
         try {
             UserGameCommand command = new Gson().fromJson(ctx.message(), UserGameCommand.class);
-//            switch (command.getCommandType()) {
-//                case MAKE_MOVE ->
-//            }
+            switch (command.getCommandType()) {
+                case CONNECT -> connect(command, ctx.session);
+            }
         } catch (Exception e) {
 
         }
@@ -73,10 +74,10 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             String playerColor = determinePlayerColor(gameData, username);
             String notificationText;
             if (playerColor == null) {
-                notificationText = String.format("%s has joined as an observer.", username);
+                notificationText = String.format("%s has joined as an observer", username);
             }
             else {
-                notificationText = String.format("%s has joined the game as %s.", username, playerColor);
+                notificationText = String.format("%s has joined the game as %s", username, playerColor);
             }
 
             // Send NOTIFICATION to all other clients
@@ -85,11 +86,25 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
 
 
         } catch (Exception e) {
+            sendError(session, "Error: " + e.getMessage());
+        }
+    }
 
+    private void sendError(Session session, String message) {
+        try {
+            Error error = new Error(message);
+            session.getRemote().sendString(new Gson().toJson(error));
+        } catch (IOException e) {
+            System.err.println("Failed to send error: " + e.getMessage());
         }
     }
 
     private String determinePlayerColor(GameData gameData, String username) {
-        return "";
+        if (username.equals(gameData.whiteUsername())) {
+            return "WHITE";
+        } else if (username.equals(gameData.blackUsername())) {
+            return "BLACK";
+        }
+        return null;
     }
 }

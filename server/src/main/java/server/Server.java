@@ -6,6 +6,7 @@ import dataaccess.MemoryDataAccess;
 import dataaccess.MySQLDataAccess;
 import model.*;
 import service.*;
+import server.websocket.WebSocketHandler;
 
 import com.google.gson.Gson;
 import io.javalin.*;
@@ -29,8 +30,10 @@ public class Server {
     private int currGame = 100;
     private int currAuth = 0;
 
+    private final WebSocketHandler webSocketHandler;
+
     public Server() {
-        DataAccess dataAccess = null;
+        MySQLDataAccess dataAccess = null;
         try {
             dataAccess = new MySQLDataAccess();
         } catch (DataAccessException e) {
@@ -40,8 +43,18 @@ public class Server {
         gameService = new GameService(dataAccess);
         clearService = new ClearService(dataAccess);
 
+        webSocketHandler = new WebSocketHandler(dataAccess);
+
 
         server = Javalin.create(config -> config.staticFiles.add("web"));
+
+        // Register WebSocket endpoint FIRST
+        server.ws("/ws", ws -> {
+            ws.onConnect(webSocketHandler::handleConnect);
+            ws.onMessage(webSocketHandler::handleMessage);
+            ws.onClose(webSocketHandler::handleClose);
+        });
+
 
         server.delete("db", this::handleClear);
         server.post("user", this::handleRegister);

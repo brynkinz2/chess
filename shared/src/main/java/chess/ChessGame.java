@@ -15,6 +15,7 @@ public class ChessGame {
     TeamColor turn = TeamColor.WHITE;
     ChessBoard board = new ChessBoard();
     List<ChessPiece> capturedPieces = new ArrayList<>();
+    boolean gameOver = false;
 
     public ChessGame() {
         board.resetBoard();
@@ -274,6 +275,14 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    public void setGameOver() {
+        gameOver = true;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
     }
 
     @Override

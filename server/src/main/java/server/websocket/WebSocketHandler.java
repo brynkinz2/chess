@@ -36,6 +36,7 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command, ctx.session);
                 case MAKE_MOVE -> makeMove(command, ctx.session, ctx.message());
+                case RESIGN -> resign(command, ctx.session);
                 case LEAVE -> leave(command, ctx.session);
             }
         } catch (Exception e) {
@@ -113,7 +114,7 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             ChessGame game = gameData.game();
 
             // Check if game is over
-            if (isGameOver(game)) {
+            if (game.isGameOver() || isGameOver(game)) {
                 throw new IllegalStateException("Game is over");
             }
 
@@ -125,20 +126,16 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
 
             // Verify it's their turn
             ChessGame.TeamColor playerTurn = gameData.game().getTeamTurn();
-            System.out.println("whos turn " + playerTurn);
             if (!playerColor.equalsIgnoreCase(playerTurn.toString())) {
                 throw new IllegalStateException("It is not your turn");
             }
 
             // Make the move (throws InvalidMoveException if illegal)
             game.makeMove(move);
-//            System.out.println(gameData.game().getTeamTurn().toString());
 
             // Update game in database
             dataAccess.update(gameData);
-            // check that it updated
-            GameData updated = dataAccess.getGame(command.getGameID());
-            System.out.println("new turn: " + updated.game().getTeamTurn().toString());
+
             // Send LOAD_GAME to all clients
             LoadGame loadGameMsg = new LoadGame(game);
             connections.broadcastToAll(gameData.gameID(), loadGameMsg);
@@ -190,6 +187,7 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             else {
                 throw new DataAccessException("Invalid game ID");
             }
+
             // Notify other clients
             String message = String.format("%s has left the game", username);
             Notification notification = new Notification(message);
@@ -197,6 +195,52 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
 
             // Remove connection
             connections.remove(command.getGameID(), command.getAuthToken());
+
+        } catch (Exception e) {
+            sendError(session, "Error: " + e.getMessage());
+        }
+    }
+
+    private void resign(UserGameCommand command, Session session) {
+        try {
+            // Validate user
+            AuthData auth = dataAccess.getAuth(command.getAuthToken());
+            if (auth == null) {
+                throw new DataAccessException("Invalid auth token");
+            }
+            String username = auth.username();
+
+            // Get game
+            GameData gameData = dataAccess.getGame(command.getGameID());
+            if (gameData == null) {
+                throw new DataAccessException("Invalid game ID");
+            }
+            ChessGame game = gameData.game();
+
+            // Verify player is resigning
+            String playerColor = determinePlayerColor(gameData, username);
+            if (playerColor == null) {
+                throw new IllegalStateException("Observers cannot resign");
+            }
+
+            // Check if game is over
+            if (isGameOver(game)) {
+                throw new IllegalStateException("Game is already over");
+            }
+
+            GameData updated = removePlayer(username, gameData);
+            updated.game().setGameOver();
+            dataAccess.update(updated);
+
+            // Notify other clients
+            String message = String.format("%s has resigned from the game", username);
+            Notification notification = new Notification(message);
+            connections.broadcastToAll(command.getGameID(), notification);
+
+            // Remove connection
+            connections.remove(command.getGameID(), command.getAuthToken());
+
+
 
         } catch (Exception e) {
             sendError(session, "Error: " + e.getMessage());

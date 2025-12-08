@@ -249,12 +249,14 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public void update(GameData game) throws DataAccessException {
-        var statement = "UPDATE game SET whiteUser = ?, blackUser = ? WHERE gameID = ?";
+        var statement = "UPDATE game SET whiteUser = ?, blackUser = ?, game = ? WHERE gameID = ?";
+        String gameJson = gson.toJson(game.game());
         try (var conn =DatabaseManager.getConnection()) {
             try(var stmt = conn.prepareStatement(statement)) {
                 stmt.setString(1, game.whiteUsername());
                 stmt.setString(2, game.blackUsername());
-                stmt.setInt(3, game.gameID());
+                stmt.setString(3, gameJson);
+                stmt.setInt(4, game.gameID());
                 stmt.executeUpdate();
             }
 

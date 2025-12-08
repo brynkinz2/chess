@@ -226,6 +226,12 @@ public class ChessGame {
         return true;
     }
 
+    public boolean isInCheckmateHelper(TeamColor teamColor, TeamColor activeColor) {
+        boolean checkmate = isInCheckmate(teamColor);
+        turn = activeColor;
+        return checkmate;
+    }
+
     /**
      * Determines if the given team is in stalemate, which here is defined as having
      * no valid moves while not in check.
@@ -244,6 +250,12 @@ public class ChessGame {
         if (!hasMoves(teamColor)) { return false; }
 
         return true;
+    }
+
+    public boolean isInStalemateHelper(TeamColor teamColor, TeamColor activeColor) {
+        boolean checkmate = isInStalemate(teamColor);
+        turn = activeColor;
+        return checkmate;
     }
 
     /**

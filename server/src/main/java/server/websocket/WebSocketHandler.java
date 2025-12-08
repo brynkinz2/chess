@@ -36,9 +36,10 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command, ctx.session);
                 case MAKE_MOVE -> makeMove(command, ctx.session, ctx.message());
+                case LEAVE -> leave(command, ctx.session);
             }
         } catch (Exception e) {
-
+            sendError(ctx.session, e.getMessage());
         }
     }
 
@@ -124,16 +125,20 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
 
             // Verify it's their turn
             ChessGame.TeamColor playerTurn = gameData.game().getTeamTurn();
+            System.out.println("whos turn " + playerTurn);
             if (!playerColor.equalsIgnoreCase(playerTurn.toString())) {
                 throw new IllegalStateException("It is not your turn");
             }
 
             // Make the move (throws InvalidMoveException if illegal)
             game.makeMove(move);
+//            System.out.println(gameData.game().getTeamTurn().toString());
 
             // Update game in database
             dataAccess.update(gameData);
-
+            // check that it updated
+            GameData updated = dataAccess.getGame(command.getGameID());
+            System.out.println("new turn: " + updated.game().getTeamTurn().toString());
             // Send LOAD_GAME to all clients
             LoadGame loadGameMsg = new LoadGame(game);
             connections.broadcastToAll(gameData.gameID(), loadGameMsg);
@@ -166,6 +171,38 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
         }
     }
 
+    private void leave(UserGameCommand command, Session session) {
+        try {
+            // Validate user
+            AuthData auth = dataAccess.getAuth(command.getAuthToken());
+            if (auth == null) {
+                throw new DataAccessException("Invalid auth token");
+            }
+            String username = auth.username();
+
+            // Get game
+            GameData gameData = dataAccess.getGame(command.getGameID());
+            if (gameData != null) {
+                // If player, remove them
+                GameData updatedGame = removePlayer(username, gameData);
+                dataAccess.update(updatedGame);
+            }
+            else {
+                throw new DataAccessException("Invalid game ID");
+            }
+            // Notify other clients
+            String message = String.format("%s has left the game", username);
+            Notification notification = new Notification(message);
+            connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
+
+            // Remove connection
+            connections.remove(command.getGameID(), command.getAuthToken());
+
+        } catch (Exception e) {
+            sendError(session, "Error: " + e.getMessage());
+        }
+    }
+
     private void sendError(Session session, String message) {
         try {
             Error error = new Error(message);
@@ -187,9 +224,19 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
     }
 
     private boolean isGameOver(ChessGame game) {
-        return game.isInCheckmate(ChessGame.TeamColor.WHITE) ||
-                game.isInCheckmate(ChessGame.TeamColor.BLACK) ||
-                game.isInStalemate(ChessGame.TeamColor.WHITE) ||
-                game.isInStalemate(ChessGame.TeamColor.BLACK);
+        return game.isInCheckmateHelper(ChessGame.TeamColor.WHITE, game.getTeamTurn()) ||
+                game.isInCheckmateHelper(ChessGame.TeamColor.BLACK, game.getTeamTurn()) ||
+                game.isInStalemateHelper(ChessGame.TeamColor.WHITE, game.getTeamTurn()) ||
+                game.isInStalemateHelper(ChessGame.TeamColor.BLACK, game.getTeamTurn());
+    }
+
+    private GameData removePlayer(String username, GameData gameData) {
+        if (username.equals(gameData.whiteUsername())) {
+            return new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(), gameData.game());
+        }
+        else if (username.equals(gameData.blackUsername())) {
+            return new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(), gameData.game());
+        }
+        return gameData;
     }
 }

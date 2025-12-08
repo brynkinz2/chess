@@ -23,6 +23,13 @@ public class ConnectionManager {
         }
     }
 
+    public void remove(Integer gameID, String authToken) {
+        var gameConnections = connections.get(gameID);
+        if (gameConnections != null) {
+            gameConnections.remove(authToken);
+        }
+    }
+
     public void broadcast(Integer gameID, String authToken, Notification notification) throws IOException {
         var gameConnections = connections.get(gameID);
         if (gameConnections == null) {

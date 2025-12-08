@@ -224,7 +224,7 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             }
 
             // Check if game is over
-            if (isGameOver(game)) {
+            if (game.isGameOver() || isGameOver(game)) {
                 throw new IllegalStateException("Game is already over");
             }
 

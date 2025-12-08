@@ -36,12 +36,12 @@ public class ConnectionManager {
         }
     }
 
-    public void broadcastToAll(Integer gameID, Notification notification) throws IOException {
+    public void broadcastToAll(Integer gameID, ServerMessage serverMessage) throws IOException {
         var gameConnections = connections.get(gameID);
         if (gameConnections == null) {
             return;
         }
-        String json = new Gson().toJson(notification);
+        String json = new Gson().toJson(serverMessage);
         for (Session session : gameConnections.values()) {
             if (session.isOpen()) {
                 session.getRemote().sendString(json);

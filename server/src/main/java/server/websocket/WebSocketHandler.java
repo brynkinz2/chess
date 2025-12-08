@@ -35,6 +35,7 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             UserGameCommand command = new Gson().fromJson(ctx.message(), UserGameCommand.class);
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command, ctx.session);
+                case MAKE_MOVE -> makeMove(command, ctx.session, ctx.message());
             }
         } catch (Exception e) {
 
@@ -90,6 +91,81 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
         }
     }
 
+    private void makeMove(UserGameCommand command, Session session, String message) {
+        try {
+            // Parse move command
+            MakeMoveCommand makeMoveCommand = new Gson().fromJson(message, MakeMoveCommand.class);
+            ChessMove move = makeMoveCommand.getMove();
+
+            // Validate user
+            AuthData auth = dataAccess.getAuth(command.getAuthToken());
+            if (auth == null) {
+                throw new DataAccessException("Invalid auth token");
+            }
+            String username = auth.username();
+
+            // Get game
+            GameData gameData = dataAccess.getGame(command.getGameID());
+            if (gameData == null) {
+                throw new DataAccessException("Invalid game ID");
+            }
+            ChessGame game = gameData.game();
+
+            // Check if game is over
+            if (isGameOver(game)) {
+                throw new IllegalStateException("Game is over");
+            }
+
+            // Verify player is making the move
+            String playerColor = determinePlayerColor(gameData, username);
+            if (playerColor == null) {
+                throw new IllegalStateException("Observers cannot make moves");
+            }
+
+            // Verify it's their turn
+            ChessGame.TeamColor playerTurn = gameData.game().getTeamTurn();
+            if (!playerColor.equalsIgnoreCase(playerTurn.toString())) {
+                throw new IllegalStateException("It is not your turn");
+            }
+
+            // Make the move (throws InvalidMoveException if illegal)
+            game.makeMove(move);
+
+            // Update game in database
+            dataAccess.update(gameData);
+
+            // Send LOAD_GAME to all clients
+            LoadGame loadGameMsg = new LoadGame(game);
+            connections.broadcastToAll(gameData.gameID(), loadGameMsg);
+
+            // Send move NOTIFICATION to other clients
+            String moveText = String.format("%s has moved from %s to %s",
+                    username,
+                    move.getStartPosition(),
+                    move.getEndPosition()
+                    );
+            Notification notification = new Notification(moveText);
+            connections.broadcast(command.getGameID(), command.getAuthToken(), notification);
+
+            // Check for check, checkmate, stalemate
+            ChessGame.TeamColor opponentColor = (playerTurn == ChessGame.TeamColor.WHITE)
+                    ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
+
+            if (game.isInCheckmate(opponentColor)) {
+                String checkmate = String.format("%s is in checkmate", opponentColor);
+                connections.broadcastToAll(command.getGameID(), new Notification(checkmate));
+            } else if (game.isInCheckmate(opponentColor)) {
+                connections.broadcastToAll(command.getGameID(), new Notification("Stalemate!"));
+            } else if (game.isInCheck(opponentColor)) {
+                String check = String.format("%s is in check", opponentColor);
+                connections.broadcastToAll(command.getGameID(), new Notification(check));
+            }
+
+        } catch (Exception e) {
+            sendError(session, "Error: " + e.getMessage());
+        }
+    }
+
     private void sendError(Session session, String message) {
         try {
             Error error = new Error(message);
@@ -99,6 +175,8 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
         }
     }
 
+    // helper functions
+
     private String determinePlayerColor(GameData gameData, String username) {
         if (username.equals(gameData.whiteUsername())) {
             return "WHITE";
@@ -106,5 +184,12 @@ public class WebSocketHandler implements WsConnectHandler, WsCloseHandler, WsMes
             return "BLACK";
         }
         return null;
+    }
+
+    private boolean isGameOver(ChessGame game) {
+        return game.isInCheckmate(ChessGame.TeamColor.WHITE) ||
+                game.isInCheckmate(ChessGame.TeamColor.BLACK) ||
+                game.isInStalemate(ChessGame.TeamColor.WHITE) ||
+                game.isInStalemate(ChessGame.TeamColor.BLACK);
     }
 }

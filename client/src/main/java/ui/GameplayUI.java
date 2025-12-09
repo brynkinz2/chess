@@ -70,7 +70,7 @@ public class GameplayUI implements NotificationHandler {
                         running = false;
                     }
                     case "move" -> makeMove(tokens);
-//                    case "resign" -> resign();
+                    case "resign" -> resign();
                     case "highlight" -> highlightMoves(tokens);
                 }
             } catch (Exception e) {
@@ -124,8 +124,16 @@ public class GameplayUI implements NotificationHandler {
             System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid position format." + RESET_TEXT_COLOR);
         }
 
-        //TODO: Check if promotion piece
+        //Check if promotion piece needed
         ChessPiece.PieceType promotion = null;
+        if (tokens.length >= 4) {
+            promotion = parsePromotion(tokens[3]);
+            if (promotion == null) {
+                System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid promotion piece. Use q/r/b/n" + RESET_TEXT_COLOR);
+                return;
+            }
+        }
+
 
         ChessMove move = new ChessMove(start, end, promotion);
         ws.makeMove(authToken, gameID, move);
@@ -178,5 +186,15 @@ public class GameplayUI implements NotificationHandler {
         int rowNum = row - '0';
 
         return new ChessPosition(rowNum, colNum);
+    }
+
+    public ChessPiece.PieceType parsePromotion(String promotion) {
+        return switch (promotion.toLowerCase()) {
+            case "q" ->  ChessPiece.PieceType.QUEEN;
+            case "r" ->  ChessPiece.PieceType.ROOK;
+            case "b" ->  ChessPiece.PieceType.BISHOP;
+            case "n" ->  ChessPiece.PieceType.KNIGHT;
+            default ->  null;
+        };
     }
 }

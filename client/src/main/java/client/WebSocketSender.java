@@ -2,7 +2,6 @@ package client;
 
 import chess.ChessMove;
 import com.google.gson.Gson;
-import org.eclipse.jetty.http.HttpTester;
 import websocket.commands.*;
 import websocket.messages.*;
 import jakarta.websocket.*;

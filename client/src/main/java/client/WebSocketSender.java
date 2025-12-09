@@ -2,6 +2,7 @@ package client;
 
 import chess.ChessMove;
 import com.google.gson.Gson;
+import org.eclipse.jetty.http.HttpTester;
 import websocket.commands.*;
 import websocket.messages.*;
 import jakarta.websocket.*;
@@ -31,32 +32,36 @@ public class WebSocketSender extends Endpoint {
             this.session.addMessageHandler(new MessageHandler.Whole<String>() {
                 @Override
                 public void onMessage(String message) {
-                    try {
-                        // Parse base message to determine type
-                        ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
-
-                        // Deserialize to correct subclass
-                        switch (serverMessage.getServerMessageType()) {
-                            case LOAD_GAME -> {
-                                LoadGame loadGame = new Gson().fromJson(message, LoadGame.class);
-                                notificationHandler.notify(loadGame);
-                            }
-                            case NOTIFICATION -> {
-                                Notification notification = new Gson().fromJson(message, Notification.class);
-                                notificationHandler.notify(notification);
-                            }
-                            case ERROR -> {
-                                Error error = new Gson().fromJson(message, Error.class);
-                                notificationHandler.notify(error);
-                            }
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error handling message: " + e.getMessage());
-                    }
+                    handleIncomingMessage(message);
                 }
             });
         } catch (DeploymentException | IOException | URISyntaxException ex) {
             throw new Exception("Failed to connect to WebSocket: " + ex.getMessage());
+        }
+    }
+
+    private void handleIncomingMessage(String message) {
+        try {
+            // Parse base message to determine type
+            ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
+
+            // Deserialize to correct subclass
+            switch (serverMessage.getServerMessageType()) {
+                case LOAD_GAME -> {
+                    LoadGame loadGame = new Gson().fromJson(message, LoadGame.class);
+                    notificationHandler.notify(loadGame);
+                }
+                case NOTIFICATION -> {
+                    Notification notification = new Gson().fromJson(message, Notification.class);
+                    notificationHandler.notify(notification);
+                }
+                case ERROR -> {
+                    Error error = new Gson().fromJson(message, Error.class);
+                    notificationHandler.notify(error);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling message: " + e.getMessage());
         }
     }
 

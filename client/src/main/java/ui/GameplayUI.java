@@ -145,6 +145,18 @@ public class GameplayUI implements NotificationHandler {
             System.out.println(SET_TEXT_COLOR_MAGENTA + "Observers cannot resign." + RESET_TEXT_COLOR);
             return;
         }
+        while (true) {
+            System.out.print(SET_TEXT_COLOR_RED + "Are you sure you would like to resign? (y/n)" + RESET_TEXT_COLOR);
+            String input = scanner.nextLine().trim().toLowerCase();
+            if (input.equals("y")) {
+                break;
+            } else if (input.equals("n")) {
+                return;
+            } else {
+                System.out.println("Invalid input please type 'y' (yes) or 'n' (no)");
+            }
+        }
+
         ws.resign(authToken, gameID);
     }
 
@@ -173,7 +185,9 @@ public class GameplayUI implements NotificationHandler {
     }
 
     public ChessPosition parsePosition(String position) {
-        if (position.length() != 2) return null;
+        if (position.length() != 2) {
+            return null;
+        }
 
         char col = position.charAt(0);
         char row = position.charAt(1);

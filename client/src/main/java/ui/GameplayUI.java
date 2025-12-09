@@ -156,7 +156,8 @@ public class GameplayUI implements NotificationHandler {
             ChessMove move = new ChessMove(start, end, promotion);
             ws.makeMove(authToken, gameID, move);
         } catch (Exception e) {
-            System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid move. Is this piece promoting? Use q/r/b/n to promote or highlight to see valid moves.");
+            System.out.println(SET_TEXT_COLOR_MAGENTA +
+                    "Invalid move. Is this piece promoting? Use q/r/b/n to promote or highlight to see valid moves.");
             System.out.println("Promotion format: 'move <from> <to> [promotion]' (e.g. move e7 e2 q)" + RESET_TEXT_COLOR);
         }
     }

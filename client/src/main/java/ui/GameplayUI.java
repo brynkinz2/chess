@@ -17,6 +17,7 @@ public class GameplayUI implements NotificationHandler {
     private ChessGame game;
     private ChessGame.TeamColor playerColor;
     private DrawChessGame boardDrawer = new DrawChessGame();
+    private boolean boardLoaded = false;
 
     public GameplayUI(String serverUrl, String authToken, int gameID, ChessGame.TeamColor playerColor) throws Exception {
         this.scanner = new Scanner(System.in);
@@ -50,11 +51,26 @@ public class GameplayUI implements NotificationHandler {
                 System.out.println(SET_TEXT_COLOR_RED + error.getErrorMessage() + RESET_TEXT_COLOR);
             }
         }
+        System.out.flush();
+        System.out.print(">>> " + SET_TEXT_COLOR_GREEN);
+        boardLoaded = true;
     }
 
     public void run() {
-        System.out.println(RESET_TEXT_COLOR + "You have joined the game. Type help for commands.");
+        System.out.println(RESET_TEXT_COLOR + "Connecting to game...");
 
+        // Wait for initial LOAD_GAME (with timeout)
+        int waitCount = 0;
+        while (!boardLoaded && waitCount < 50) { // 5 second timeout
+            try {
+                Thread.sleep(100);
+                waitCount++;
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+        System.out.println(RESET_TEXT_COLOR + "You have joined the game. Type help for commands.");
+        boardLoaded = false;
         boolean running = true;
         while (running) {
             System.out.print(">>> " + SET_TEXT_COLOR_GREEN);
@@ -67,6 +83,7 @@ public class GameplayUI implements NotificationHandler {
                     case "redraw" -> drawBoard();
                     case "leave" -> {
                         ws.leave(authToken, gameID);
+                        Thread.sleep(20);
                         running = false;
                     }
                     case "move" -> makeMove(tokens);
@@ -135,8 +152,13 @@ public class GameplayUI implements NotificationHandler {
         }
 
 
-        ChessMove move = new ChessMove(start, end, promotion);
-        ws.makeMove(authToken, gameID, move);
+        try {
+            ChessMove move = new ChessMove(start, end, promotion);
+            ws.makeMove(authToken, gameID, move);
+        } catch (Exception e) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid move. Is this piece promoting? Use q/r/b/n to promote or highlight to see valid moves.");
+            System.out.println("Promotion format: 'move <from> <to> [promotion]' (e.g. move e7 e2 q)" + RESET_TEXT_COLOR);
+        }
     }
 
     private void resign() throws Exception {
@@ -177,11 +199,15 @@ public class GameplayUI implements NotificationHandler {
             return;
         }
 
-        var validMoves = game.validMoves(position);
-        DrawChessGame drawBoard = new DrawChessGame();
-        drawBoard.drawWithHighlights(validMoves);
-        boolean whitePerspective = (playerColor.equals(ChessGame.TeamColor.WHITE) || playerColor == null);
-        drawBoard.drawBoard(game.getBoard(), whitePerspective);
+        try {
+            var validMoves = game.validMoves(position);
+            DrawChessGame drawBoard = new DrawChessGame();
+            drawBoard.drawWithHighlights(validMoves);
+            boolean whitePerspective = (playerColor.equals(ChessGame.TeamColor.WHITE) || playerColor == null);
+            drawBoard.drawBoard(game.getBoard(), whitePerspective);
+        } catch (Exception e) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "No chess piece in that position." + RESET_TEXT_COLOR);
+        }
     }
 
     public ChessPosition parsePosition(String position) {

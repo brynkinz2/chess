@@ -108,8 +108,9 @@ public class ChessClient {
     }
 
     private void joinGame(String[] params) throws Exception {
-        if (currGamesList.isEmpty()) {
+        if (currGamesList == null) {
             System.out.println(SET_TEXT_COLOR_MAGENTA + "Type list to see game IDs for joining/observing." + RESET_TEXT_COLOR);
+            return;
         }
         GameData game = currGamesList.get(Integer.parseInt(params[0]));
         serverFacade.joinGame(game.gameID(), params[1].toUpperCase(), authToken);
@@ -123,8 +124,9 @@ public class ChessClient {
     }
 
     private void observeGame(String[] params) throws Exception {
-        if (currGamesList.isEmpty()) {
+        if (currGamesList == null) {
             System.out.println(SET_TEXT_COLOR_MAGENTA + "Type list to see game IDs for joining/observing." + RESET_TEXT_COLOR);
+            return;
         }
         int gameIndex = Integer.parseInt(params[0]);
         if (gameIndex < 0 || gameIndex >= currGamesList.size()) {

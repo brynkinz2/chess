@@ -54,7 +54,7 @@ public class DrawChessGame {
     }
 
     private void drawBorder(boolean whitePerspective) {
-        System.out.print(SET_BG_COLOR_DARK_GREEN + RESET_TEXT_COLOR + "   ");
+        System.out.print(SET_BG_COLOR_MAGENTA + RESET_TEXT_COLOR + "   ");
 
         if (whitePerspective) {
             for (char c = 'a'; c <= 'h'; c++) {
@@ -69,7 +69,7 @@ public class DrawChessGame {
     }
 
     private void drawRow(int row, boolean whitePerspective) {
-        System.out.print(SET_BG_COLOR_DARK_GREEN + RESET_TEXT_COLOR + " " + row + " ");
+        System.out.print(SET_BG_COLOR_MAGENTA + RESET_TEXT_COLOR + " " + row + " ");
         System.out.print(RESET_TEXT_COLOR + RESET_BG_COLOR);
 
         if (whitePerspective) {
@@ -81,7 +81,7 @@ public class DrawChessGame {
                 drawSquare(row, i);
             }
         }
-        System.out.println(SET_BG_COLOR_DARK_GREEN + RESET_TEXT_COLOR + " " + row + " " + RESET_BG_COLOR);
+        System.out.println(SET_BG_COLOR_MAGENTA + RESET_TEXT_COLOR + " " + row + " " + RESET_BG_COLOR);
     }
 
     private void drawSquare(int row, int col) {

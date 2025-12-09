@@ -5,23 +5,59 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import chess.ChessGame;
+import client.NotificationHandler;
 import client.ServerFacade;
+import client.WebSocketSender;
 import model.AuthData;
 import model.GameData;
+import websocket.messages.LoadGame;
+import websocket.messages.ServerMessage;
 
 import static ui.EscapeSequences.*;
 
-public class ChessClient {
+public class ChessClient implements NotificationHandler {
     private static ServerFacade serverFacade;
+    private static WebSocketSender ws;
     private static Scanner scanner;
     private String authToken = null;
     private String username = null;
     private List<GameData> currGamesList = null;
+    private ChessGame game;
+    private ChessGame.TeamColor playerColor = null; // null if observer
+    private Integer currentGameID = null;
+    private boolean inGameplay = false;
 
 
-    public ChessClient(int port) {
+    public ChessClient(int port, String serverURL) throws Exception {
         serverFacade = new ServerFacade(port);
         scanner = new Scanner(System.in);
+        ws = new WebSocketSender(serverURL, this);
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                LoadGame loadGame = (LoadGame) message;
+                this.game = loadGame.getGame();
+                redrawBoard();
+            }
+            case NOTIFICATION -> {
+                websocket.messages.Notification notification = (websocket.messages.Notification) message;
+                System.out.println("\n" + SET_TEXT_COLOR_YELLOW + notification.getNotificationMessage() + RESET_TEXT_COLOR);
+                if (inGameplay) {
+                    printGameplayPrompt();
+                }
+            }
+            case ERROR ->  {
+                websocket.messages.Error error = (websocket.messages.Error) message;
+                System.err.println("\n" + SET_TEXT_COLOR_RED + error.getErrorMessage() + RESET_TEXT_COLOR);
+                if (inGameplay) {
+                    printGameplayPrompt();
+                }
+            }
+        }
     }
 
     public void run() {
@@ -72,6 +108,8 @@ public class ChessClient {
     private void printPrompt() {
         System.out.print(">>> " + SET_TEXT_COLOR_GREEN);
     }
+
+    private void printGameplayPrompt() {}
 
     private void register(String[] params) throws IOException {
         AuthData auth = serverFacade.register(params[0], params[1]);
@@ -199,4 +237,6 @@ public class ChessClient {
             System.out.println(RESET_TEXT_COLOR);
         }
     }
+
+    public void redrawBoard() {}
 }

@@ -50,7 +50,6 @@ public class GameplayUI implements NotificationHandler {
                 System.out.println(SET_TEXT_COLOR_RED + error.getErrorMessage() + RESET_TEXT_COLOR);
             }
         }
-        System.out.print("\n>>> " + SET_TEXT_COLOR_GREEN);
     }
 
     public void run() {
@@ -70,9 +69,9 @@ public class GameplayUI implements NotificationHandler {
                         ws.leave(authToken, gameID);
                         running = false;
                     }
-//                    case "move" -> makeMove(tokens);
+                    case "move" -> makeMove(tokens);
 //                    case "resign" -> resign();
-//                    case "highlight" -> highlightMoves(tokens);
+                    case "highlight" -> highlightMoves(tokens);
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -95,5 +94,89 @@ public class GameplayUI implements NotificationHandler {
         System.out.println(SET_TEXT_COLOR_BLUE + "help" + RESET_TEXT_COLOR + " - with possible commands");
     }
 
-    public void drawBoard() {}
+    public void drawBoard() {
+        if (game == null) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Game has not loaded." + RESET_TEXT_COLOR);
+        }
+        DrawChessGame drawBoard = new DrawChessGame();
+        boolean whitePerspective = (playerColor.equals(ChessGame.TeamColor.WHITE) || playerColor == null);
+        drawBoard.drawBoard(game.getBoard(), whitePerspective);
+    }
+
+    private void makeMove(String[] tokens) throws Exception {
+        // If observer, cannot make move.
+        if (playerColor == null) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Observers cannot make moves." + RESET_TEXT_COLOR);
+        }
+
+        if (tokens.length < 3) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid number of arguments." + RESET_TEXT_COLOR);
+            System.out.println("To make a move use the following format: 'move <from> <to> [promotion]'");
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Example with out promotion: 'move e2 e4'");
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Example with promotion: 'move e2 e4 q'" + RESET_TEXT_COLOR);
+            return;
+        }
+
+        ChessPosition start = parsePosition(tokens[1]);
+        ChessPosition end = parsePosition(tokens[2]);
+
+        if (start == null || end == null) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid position format." + RESET_TEXT_COLOR);
+        }
+
+        //TODO: Check if promotion piece
+        ChessPiece.PieceType promotion = null;
+
+        ChessMove move = new ChessMove(start, end, promotion);
+        ws.makeMove(authToken, gameID, move);
+    }
+
+    private void resign() throws Exception {
+        // Observers cannot resign
+        if (playerColor == null) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Observers cannot resign." + RESET_TEXT_COLOR);
+            return;
+        }
+        ws.resign(authToken, gameID);
+    }
+
+    private void highlightMoves(String[] tokens) throws Exception {
+        if (tokens.length < 2) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid number of arguments. Type help to see options" + RESET_TEXT_COLOR);
+            return;
+        }
+
+        ChessPosition position = parsePosition(tokens[1]);
+        if (position == null) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Invalid position format." + RESET_TEXT_COLOR);
+            return;
+        }
+
+        if (game == null) {
+            System.out.println(SET_TEXT_COLOR_MAGENTA + "Game has not loaded." + RESET_TEXT_COLOR);
+            return;
+        }
+
+        var validMoves = game.validMoves(position);
+        DrawChessGame drawBoard = new DrawChessGame();
+        drawBoard.drawWithHighlights(validMoves);
+        boolean whitePerspective = (playerColor.equals(ChessGame.TeamColor.WHITE) || playerColor == null);
+        drawBoard.drawBoard(game.getBoard(), whitePerspective);
+    }
+
+    public ChessPosition parsePosition(String position) {
+        if (position.length() != 2) return null;
+
+        char col = position.charAt(0);
+        char row = position.charAt(1);
+
+        if (col < 'a' || col > 'h' || row < '1' || row > '8') {
+            return null;
+        }
+
+        int colNum = col - 'a' + 1;
+        int rowNum = row - '0';
+
+        return new ChessPosition(rowNum, colNum);
+    }
 }

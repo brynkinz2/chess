@@ -4,6 +4,8 @@ import chess.*;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 
 import static ui.EscapeSequences.*;
@@ -15,6 +17,7 @@ public class DrawChessGame {
     public static ChessBoard board;
     public static String playerColor;
     public static ChessGame game;
+    private static Collection<ChessMove> moves = new ArrayList<>();
 
     public void drawBoard(ChessBoard board, boolean whitePerspective) {
         DrawChessGame.board = board;
@@ -23,6 +26,11 @@ public class DrawChessGame {
         } else {
             drawBoardFromBlackPerspective();
         }
+        moves = new ArrayList<>();
+    }
+
+    public void drawWithHighlights(Collection<ChessMove> moves) {
+        this.moves = moves;
     }
 
     private void drawBoardFromWhitePerspective() {
@@ -77,8 +85,21 @@ public class DrawChessGame {
     }
 
     private void drawSquare(int row, int col) {
+        ChessPosition currentPos = new ChessPosition(row, col);
         boolean lightSquare = (row + col) % 2 != 0;
         String squareBG = lightSquare ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
+
+        for (ChessMove move : moves) {
+            if (move.getStartPosition().equals(currentPos)) {
+                squareBG = SET_BG_COLOR_YELLOW;
+            } else if (move.getEndPosition().equals(currentPos)) {
+                if (lightSquare) {
+                    squareBG = SET_BG_COLOR_GREEN;
+                } else {
+                    squareBG = SET_BG_COLOR_DARK_GREEN;
+                }
+            }
+        }
 
         ChessPiece piece = board.getPiece(new ChessPosition(row, col));
 

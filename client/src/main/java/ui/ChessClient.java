@@ -122,7 +122,7 @@ public class ChessClient {
         gameplayUI.run();
     }
 
-    private void observeGame(String[] params) throws IOException {
+    private void observeGame(String[] params) throws Exception {
         if (currGamesList.isEmpty()) {
             System.out.println(SET_TEXT_COLOR_MAGENTA + "Type list to see game IDs for joining/observing." + RESET_TEXT_COLOR);
         }
@@ -131,8 +131,9 @@ public class ChessClient {
             throw new IndexOutOfBoundsException();
         }
         GameData game = currGamesList.get(Integer.parseInt(params[0]));
-        DrawChessGame drawBoard = new DrawChessGame();
-        drawBoard.drawBoard(game.game().getBoard(), true);
+        // Launch gameplay UI
+        GameplayUI gameplayUI = new GameplayUI(serverUrl, authToken, game.gameID(), null);
+        gameplayUI.run();
     }
 
     private void logout() throws IOException {

@@ -20,7 +20,8 @@ public class WebSocketSender extends Endpoint {
     public WebSocketSender(String url, NotificationHandler notificationHandler) throws Exception {
         try {
             url = url.replace("http", "ws");
-            URI socketURI = new URI(url + "/ws");
+            URI socketURI = new URI(url);
+            System.out.println("Connecting to websocket: " + socketURI);
             this.notificationHandler = notificationHandler;
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -97,6 +98,12 @@ public class WebSocketSender extends Endpoint {
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException ex) {
             throw new Exception("Failed to send resign: " + ex.getMessage());
+        }
+    }
+
+    public void close() throws Exception {
+        if (session != null && session.isOpen()) {
+            session.close();
         }
     }
 }

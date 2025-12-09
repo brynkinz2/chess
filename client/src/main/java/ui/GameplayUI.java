@@ -82,7 +82,7 @@ public class GameplayUI implements NotificationHandler {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        System.out.println(RESET_TEXT_COLOR + "Left the game.");
+        System.out.println(RESET_TEXT_COLOR + "You have left the game.");
     }
 
     public void help() {
